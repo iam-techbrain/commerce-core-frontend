@@ -1,0 +1,172 @@
+/* =========================================================================
+   🏆 CHHABRA SPORTS E-COMMERCE DESIGN SYSTEM
+   Importing Master Custom Theme (chhabra-sports.css)
+   ========================================================================= */
+
+@import './chhabra-sports.css';
+
+/* Override base defaults to ensure parchment court theme is 100% active */
+html, body {
+  background-color: var(--parchment) !important;
+  color: var(--ink) !important;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--parchment);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pitch-light);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
+/* App Container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--parchment);
+}
+
+/* Form Controls System */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  background: var(--white);
+  color: var(--ink);
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  outline: none;
+  font-weight: 500;
+}
+
+.form-control:focus {
+  border-color: var(--pitch);
+}
+
+/* Cart Overlay & Drawer Global Fixes */
+.cart-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(10, 36, 28, 0.75) !important;
+  backdrop-filter: blur(6px) !important;
+  z-index: 9998 !important;
+}
+
+.cart-drawer {
+  position: fixed !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  background: var(--parchment) !important;
+  border-left: 1px solid var(--line) !important;
+  z-index: 9999 !important;
+  padding: 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: var(--shadow-lg) !important;
+  overflow: hidden !important;
+}
+
+.cart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.cart-header h2 {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  color: var(--pitch);
+}
+
+.cart-items-list {
+  flex: 1;
+  overflow-y: auto;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  padding: 12px 16px;
+  border-radius: 8px;
+}
+
+.cart-item-img {
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  min-height: 64px !important;
+  max-width: 64px !important;
+  max-height: 64px !important;
+  object-fit: cover !important;
+  border-radius: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+.cart-footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  background: var(--white);
+}
+
+.cart-subtotal {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  font-family: 'Outfit', sans-serif;
+  color: var(--pitch);
+}
+
+/* Card utilities */
+.profile-card, .auth-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
