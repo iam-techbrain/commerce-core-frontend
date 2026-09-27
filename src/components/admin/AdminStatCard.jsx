@@ -1,23 +1,22 @@
 import React from 'react';
+import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
-const AdminStatCard = ({ title, value, icon: Icon, color }) => {
+const AdminStatCard = ({ title, value, icon: Icon, type = 'primary', change = '+12% this month' }) => {
   return (
-    <div className="profile-card" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-      <div style={{
-        width: '56px',
-        height: '56px',
-        borderRadius: '14px',
-        background: `rgba(${color}, 0.15)`,
-        color: `rgb(${color})`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        {Icon && <Icon size={28} />}
-      </div>
+    <div className={`admin-stat-card ${type}`}>
       <div>
-        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>{title}</span>
-        <h3 style={{ fontSize: '1.6rem', fontWeight: 800, marginTop: '2px' }}>{value}</h3>
+        <div className="admin-stat-title">{title}</div>
+        <div className="admin-stat-value">{value}</div>
+        {change && (
+          <div className="admin-stat-change" style={{ color: type === 'danger' ? '#e74a3b' : '#1cc88a' }}>
+            {type === 'danger' ? <ArrowDownRight size={13} /> : <ArrowUpRight size={13} />}
+            <span>{change}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="admin-stat-icon-badge">
+        {Icon && <Icon size={24} />}
       </div>
     </div>
   );

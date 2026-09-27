@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
 import API from '../../api/axios';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { Plus, Trash2, Layers, X } from 'lucide-react';
+import { Plus, Trash2, Layers, X, Home, ChevronRight } from 'lucide-react';
 
 const AdminCategoriesPage = () => {
   const [categories, setCategories] = useState([]);
@@ -41,9 +42,11 @@ const AdminCategoriesPage = () => {
       });
 
       if (res.data.success) {
-        alert('Category add ho gayi! 📁');
+        alert('Category successfully add ho gayi! 📁');
         setShowModal(false);
-        setName(''); setDescription(''); setImageFile(null);
+        setName('');
+        setDescription('');
+        setImageFile(null);
         fetchCategories();
       }
     } catch (err) {
@@ -52,6 +55,7 @@ const AdminCategoriesPage = () => {
   };
 
   const handleDeleteCategory = async (id) => {
+    if (!window.confirm('Kya aap is category ko delete karna chahte hain?')) return;
     try {
       const res = await API.delete(`/categories/${id}`);
       if (res.data.success) {
@@ -59,83 +63,181 @@ const AdminCategoriesPage = () => {
         fetchCategories();
       }
     } catch (err) {
-      // Show Backend Product Protection Validation Error Message!
-      alert(err.response?.data?.message || 'Category delete Nahi ho sakti!');
+      alert(err.response?.data?.message || 'Category delete nahi ho sakti kyunki isme products hain!');
     }
   };
 
   return (
     <AdminLayout>
       <div>
-        <div className="section-header" style={{ marginBottom: '28px' }}>
-          <h1 className="section-title">Manage Categories</h1>
-          <button className="btn-primary" onClick={() => setShowModal(true)}>
-            <Plus size={18} /> Add New Category
+        {/* Admin Page Header with Breadcrumb */}
+        <div className="admin-page-header">
+          <div className="admin-page-title-group">
+            <h1>Manage Categories</h1>
+            <p>Organize products into hierarchical sport categories and collections.</p>
+          </div>
+
+          <div className="admin-breadcrumb">
+            <NavLink to="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Home size={14} />
+              <span>Home</span>
+            </NavLink>
+            <ChevronRight size={12} style={{ opacity: 0.5 }} />
+            <span>Categories</span>
+          </div>
+        </div>
+
+        {/* Action Toolbar */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+          <button
+            className="btn-primary"
+            onClick={() => setShowModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'var(--admin-primary)',
+              borderColor: 'var(--admin-primary)',
+              boxShadow: '0 4px 12px rgba(78, 115, 223, 0.25)'
+            }}
+          >
+            <Plus size={18} />
+            <span>Add New Category</span>
           </button>
         </div>
 
         {/* Modal Form */}
         {showModal && (
-          <div className="cart-overlay">
-            <div className="auth-card" style={{ maxWidth: '480px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Add New Category</h2>
-                <button className="icon-btn" onClick={() => setShowModal(false)}><X size={18} /></button>
+          <div
+            className="cart-overlay"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
+            onClick={() => setShowModal(false)}
+          >
+            <div
+              className="auth-card"
+              style={{ maxWidth: '480px', width: '92%', borderRadius: '12px', padding: '24px' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--admin-border)', paddingBottom: '12px' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--admin-text-dark)' }}>
+                  Add New Category
+                </h2>
+                <button
+                  className="icon-btn"
+                  onClick={() => setShowModal(false)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                >
+                  <X size={20} />
+                </button>
               </div>
 
               <form onSubmit={handleCreateCategory}>
                 <div className="form-group">
-                  <label>Category Name</label>
-                  <input className="form-control" required placeholder="Electronics" value={name} onChange={(e) => setName(e.target.value)} />
+                  <label>Category Name *</label>
+                  <input
+                    className="form-control"
+                    required
+                    placeholder="e.g. Badminton Gear"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Description</label>
-                  <input className="form-control" placeholder="Gadgets and electronic items" value={description} onChange={(e) => setDescription(e.target.value)} />
+                  <input
+                    className="form-control"
+                    placeholder="Racquets, shuttlecocks, and grips"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Category Banner Image</label>
-                  <input className="form-control" type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} />
+                  <input
+                    className="form-control"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files[0])}
+                  />
                 </div>
-                <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '12px' }}>
-                  Save Category
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  style={{ width: '100%', marginTop: '16px', background: 'var(--admin-primary)', borderColor: 'var(--admin-primary)' }}
+                >
+                  Save & Publish Category
                 </button>
               </form>
             </div>
           </div>
         )}
 
-        {/* Categories Table */}
-        <div className="profile-card">
+        {/* Categories Table Card */}
+        <div className="admin-card">
+          <div className="admin-card-header">
+            <h3 className="admin-card-title">
+              <Layers size={20} color="var(--admin-primary)" />
+              <span>All Categories ({categories.length})</span>
+            </h3>
+            <span style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>
+              Master taxonomy list
+            </span>
+          </div>
+
           {loading ? (
-            <p style={{ color: 'var(--text-muted)' }}>Loading categories...</p>
+            <p style={{ color: 'var(--admin-text-muted)', padding: '20px 0' }}>Loading categories...</p>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                  <th style={{ padding: '12px' }}>Category Name</th>
-                  <th style={{ padding: '12px' }}>Description</th>
-                  <th style={{ padding: '12px' }}>Product Count</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories.map((c) => (
-                  <tr key={c.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
-                    <td style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <img src={c.imageUrl ? `http://localhost:5000${c.imageUrl}` : 'https://via.placeholder.com/40'} alt={c.name} style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }} />
-                      <span style={{ fontWeight: 600 }}>{c.name}</span>
-                    </td>
-                    <td style={{ padding: '12px', color: 'var(--text-muted)' }}>{c.description || 'N/A'}</td>
-                    <td style={{ padding: '12px', fontWeight: 700 }}>{c._count?.products || 0} Products</td>
-                    <td style={{ padding: '12px', textAlign: 'right' }}>
-                      <button className="icon-btn" style={{ color: 'var(--danger)', borderColor: 'transparent' }} onClick={() => handleDeleteCategory(c.id)}>
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th>Product Count</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {categories.map((c) => (
+                    <tr key={c.id}>
+                      <td style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <img
+                          src={c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `http://localhost:5000${c.imageUrl}`) : 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=100'}
+                          alt={c.name}
+                          style={{ width: '42px', height: '42px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
+                        />
+                        <span style={{ fontWeight: 700, color: 'var(--admin-text-dark)' }}>{c.name}</span>
+                      </td>
+                      <td style={{ color: 'var(--admin-text-muted)' }}>{c.description || 'N/A'}</td>
+                      <td>
+                        <span
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            background: 'rgba(78, 115, 223, 0.1)',
+                            color: 'var(--admin-primary)',
+                            fontSize: '0.75rem',
+                            fontWeight: 700
+                          }}
+                        >
+                          {c._count?.products || 0} Products
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          className="icon-btn"
+                          style={{ color: 'var(--admin-danger)', borderColor: 'transparent' }}
+                          onClick={() => handleDeleteCategory(c.id)}
+                          title="Delete Category"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

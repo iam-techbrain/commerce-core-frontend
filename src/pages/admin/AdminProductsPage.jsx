@@ -14,7 +14,13 @@ import {
   Layers,
   Sparkles,
   ExternalLink,
-  ChevronDown
+  ChevronDown,
+  Eye,
+  Edit2,
+  Save,
+  Tag,
+  Settings,
+  Check
 } from 'lucide-react';
 
 const AdminProductsPage = () => {
@@ -42,7 +48,7 @@ const AdminProductsPage = () => {
   const [galleryUrls, setGalleryUrls] = useState('');
   const [downloadImages, setDownloadImages] = useState(true); // Download locally to prevent 3rd-party dependency!
 
-  // Variants handling
+  // Variants handling (when creating new product)
   const [hasVariants, setHasVariants] = useState(false);
   const [variantsList, setVariantsList] = useState([]);
 
@@ -52,6 +58,38 @@ const AdminProductsPage = () => {
   const [bulkDownloadImages, setBulkDownloadImages] = useState(true);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkMessage, setBulkMessage] = useState(null);
+
+  // 👁️ & ➕ MANAGE VARIANTS MODAL STATE
+  const [selectedProductForVariants, setSelectedProductForVariants] = useState(null);
+  const [variantActionMsg, setVariantActionMsg] = useState(null);
+  const [addingVariant, setAddingVariant] = useState(false);
+
+  // New Variant Form State
+  const [newVarAttr1Name, setNewVarAttr1Name] = useState('Weight');
+  const [newVarAttr1Val, setNewVarAttr1Val] = useState('');
+  const [newVarAttr2Name, setNewVarAttr2Name] = useState('');
+  const [newVarAttr2Val, setNewVarAttr2Val] = useState('');
+  const [newVarTitle, setNewVarTitle] = useState('');
+  const [newVarPrice, setNewVarPrice] = useState('');
+  const [newVarMrp, setNewVarMrp] = useState('');
+  const [newVarStock, setNewVarStock] = useState('10');
+  const [newVarSku, setNewVarSku] = useState('');
+  const [newVarImageUrl, setNewVarImageUrl] = useState('');
+  const [newVarDownloadImages, setNewVarDownloadImages] = useState(true);
+
+  // Inline Variant Edit State
+  const [editingVariantId, setEditingVariantId] = useState(null);
+  const [editVarTitle, setEditVarTitle] = useState('');
+  const [editVarPrice, setEditVarPrice] = useState('');
+  const [editVarMrp, setEditVarMrp] = useState('');
+  const [editVarStock, setEditVarStock] = useState('');
+  const [editVarImageUrl, setEditVarImageUrl] = useState('');
+  const [savingVariant, setSavingVariant] = useState(false);
+
+  // ⚙️ MASTER ATTRIBUTES MODAL STATE
+  const [showAttributesModal, setShowAttributesModal] = useState(false);
+  const [newMasterAttrName, setNewMasterAttrName] = useState('');
+  const [newValInputs, setNewValInputs] = useState({});
 
   const fetchProducts = async () => {
     try {
@@ -276,37 +314,226 @@ const AdminProductsPage = () => {
     }
   };
 
+  // -------------------- 👁️ & ➕ MANAGE VARIANTS HANDLERS --------------------
+  const openVariantsModal = (product) => {
+    setSelectedProductForVariants(product);
+    setVariantActionMsg(null);
+    setEditingVariantId(null);
+
+    const firstAttr = masterAttributes[0]?.name || 'Weight';
+    const firstVal = masterAttributes[0]?.values[0]?.value || '';
+    setNewVarAttr1Name(firstAttr);
+    setNewVarAttr1Val(firstVal);
+    setNewVarAttr2Name('');
+    setNewVarAttr2Val('');
+    setNewVarTitle(firstVal ? `${firstAttr}: ${firstVal}` : '');
+    setNewVarPrice(product.price ? String(product.price) : '');
+    setNewVarMrp(product.mrp ? String(product.mrp) : '');
+    setNewVarStock('10');
+    setNewVarSku('');
+    setNewVarImageUrl('');
+    setNewVarDownloadImages(true);
+  };
+
+  const handleAddVariantToProduct = async (e) => {
+    e.preventDefault();
+    if (!selectedProductForVariants) return;
+    if (!newVarPrice) {
+      alert('Variant Price zaroori hai!');
+      return;
+    }
+
+    setAddingVariant(true);
+    setVariantActionMsg(null);
+
+    try {
+      const attrs = {};
+      if (newVarAttr1Name && newVarAttr1Val) attrs[newVarAttr1Name] = newVarAttr1Val;
+      if (newVarAttr2Name && newVarAttr2Val) attrs[newVarAttr2Name] = newVarAttr2Val;
+
+      const title = newVarTitle.trim() || Object.values(attrs).join(' / ') || 'Standard Variant';
+
+      const payload = {
+        title,
+        attributes: attrs,
+        price: parseFloat(newVarPrice),
+        mrp: newVarMrp ? parseFloat(newVarMrp) : null,
+        stock: parseInt(newVarStock || 0),
+        sku: newVarSku.trim() || undefined,
+        imageUrl: newVarImageUrl.trim() || null,
+        downloadImages: newVarDownloadImages
+      };
+
+      const res = await API.post(`/products/${selectedProductForVariants.id}/variants`, payload);
+      if (res.data.success) {
+        setVariantActionMsg({ type: 'success', text: res.data.message });
+
+        // Refresh all products and update selectedProductForVariants
+        const updatedProdRes = await API.get('/products?limit=100');
+        if (updatedProdRes.data.success) {
+          setProducts(updatedProdRes.data.data);
+          const freshProd = updatedProdRes.data.data.find((p) => p.id === selectedProductForVariants.id);
+          if (freshProd) setSelectedProductForVariants(freshProd);
+        }
+
+        // Reset inputs
+        setNewVarSku('');
+        setNewVarImageUrl('');
+      }
+    } catch (err) {
+      setVariantActionMsg({
+        type: 'error',
+        text: err.response?.data?.message || 'Variant add karne me error aaya!'
+      });
+    } finally {
+      setAddingVariant(false);
+    }
+  };
+
+  const handleDeleteVariant = async (variantId) => {
+    if (!window.confirm('Kya aap sach me is variant ko delete karna chahte hain?')) return;
+    try {
+      const res = await API.delete(`/products/variants/${variantId}`);
+      if (res.data.success) {
+        setVariantActionMsg({ type: 'success', text: 'Variant successfully delete ho gaya!' });
+
+        const updatedProdRes = await API.get('/products?limit=100');
+        if (updatedProdRes.data.success) {
+          setProducts(updatedProdRes.data.data);
+          const freshProd = updatedProdRes.data.data.find((p) => p.id === selectedProductForVariants.id);
+          if (freshProd) setSelectedProductForVariants(freshProd);
+        }
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Variant delete error');
+    }
+  };
+
+  const handleStartEditVariant = (variant) => {
+    setEditingVariantId(variant.id);
+    setEditVarTitle(variant.title || '');
+    setEditVarPrice(String(variant.price || ''));
+    setEditVarMrp(variant.mrp ? String(variant.mrp) : '');
+    setEditVarStock(String(variant.stock || '0'));
+    setEditVarImageUrl(variant.imageUrl || '');
+  };
+
+  const handleSaveEditVariant = async (variantId) => {
+    try {
+      setSavingVariant(true);
+      const res = await API.put(`/products/variants/${variantId}`, {
+        title: editVarTitle,
+        price: parseFloat(editVarPrice),
+        mrp: editVarMrp ? parseFloat(editVarMrp) : null,
+        stock: parseInt(editVarStock),
+        imageUrl: editVarImageUrl ? editVarImageUrl.trim() : null
+      });
+
+      if (res.data.success) {
+        setVariantActionMsg({ type: 'success', text: 'Variant successfully update ho gaya!' });
+        setEditingVariantId(null);
+
+        const updatedProdRes = await API.get('/products?limit=100');
+        if (updatedProdRes.data.success) {
+          setProducts(updatedProdRes.data.data);
+          const freshProd = updatedProdRes.data.data.find((p) => p.id === selectedProductForVariants.id);
+          if (freshProd) setSelectedProductForVariants(freshProd);
+        }
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Variant update error');
+    } finally {
+      setSavingVariant(false);
+    }
+  };
+
+  // -------------------- ⚙️ MASTER ATTRIBUTES HANDLERS --------------------
+  const handleCreateMasterAttribute = async (e) => {
+    e.preventDefault();
+    if (!newMasterAttrName.trim()) return;
+    try {
+      const res = await API.post('/attributes', { name: newMasterAttrName.trim() });
+      if (res.data.success) {
+        setNewMasterAttrName('');
+        const attrRes = await API.get('/attributes');
+        if (attrRes.data.success) setMasterAttributes(attrRes.data.data);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Attribute create error');
+    }
+  };
+
+  const handleAddAttributeValue = async (attributeId) => {
+    const input = newValInputs[attributeId];
+    if (!input || !input.value || !input.value.trim()) {
+      alert('Kripya value enter karein!');
+      return;
+    }
+    try {
+      const res = await API.post(`/attributes/${attributeId}/values`, {
+        value: input.value.trim(),
+        colorCode: input.colorCode ? input.colorCode.trim() : null
+      });
+      if (res.data.success) {
+        setNewValInputs({ ...newValInputs, [attributeId]: { value: '', colorCode: '' } });
+        const attrRes = await API.get('/attributes');
+        if (attrRes.data.success) setMasterAttributes(attrRes.data.data);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Value add error');
+    }
+  };
+
+  const handleDeleteAttributeValue = async (valueId) => {
+    if (!window.confirm('Delete this option?')) return;
+    try {
+      const res = await API.delete(`/attributes/values/${valueId}`);
+      if (res.data.success) {
+        const attrRes = await API.get('/attributes');
+        if (attrRes.data.success) setMasterAttributes(attrRes.data.data);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Value delete error');
+    }
+  };
+
   return (
     <AdminLayout>
       <div>
-        {/* Header with Title & Action Buttons */}
+        {/* Admin Page Header with Breadcrumb */}
+        <div className="admin-page-header">
+          <div className="admin-page-title-group">
+            <h1>Product Catalog</h1>
+            <p>Manage single products, variants (Color, Size, Weight, Height), and batch Excel uploads.</p>
+          </div>
+
+          <div className="admin-breadcrumb">
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Package size={14} color="var(--admin-primary)" />
+              <span>Catalog</span>
+            </span>
+            <span style={{ opacity: 0.5 }}>/</span>
+            <span>Products</span>
+          </div>
+        </div>
+
+        {/* Action Buttons Toolbar Bar */}
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: '28px',
+            marginBottom: '24px',
             flexWrap: 'wrap',
-            gap: '16px'
+            gap: '12px'
           }}
         >
-          <div>
-            <h1 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Package size={26} color="var(--gold)" />
-              Product Catalog
-            </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '4px' }}>
-              Manage single products, variants (Color, Size, Weight, Height), and batch Excel uploads.
-            </p>
-          </div>
-
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {/* Download Template Button */}
             <button
-              className="btn-outline"
+              className="btn-outline admin-btn"
               onClick={handleDownloadTemplate}
               title="Download official sample Excel template"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
               <Download size={16} />
               <span>Download Excel Template</span>
@@ -314,42 +541,53 @@ const AdminProductsPage = () => {
 
             {/* Bulk Upload Button */}
             <button
-              className="btn-outline"
+              className="btn-outline admin-btn admin-btn-success"
               onClick={() => {
                 setShowBulkModal(true);
                 setBulkMessage(null);
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                borderColor: 'var(--gold)',
-                color: 'var(--gold)'
               }}
             >
               <FileSpreadsheet size={16} />
               <span>Bulk Upload (Excel)</span>
             </button>
 
-            {/* Add New Product Button */}
+            {/* Attributes Master Button */}
             <button
-              className="btn-primary"
-              onClick={() => {
-                setShowModal(true);
-                if (masterAttributes.length === 0) fetchProducts();
-              }}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              className="btn-outline admin-btn admin-btn-primary"
+              onClick={() => setShowAttributesModal(true)}
             >
-              <Plus size={18} />
-              <span>Add Product</span>
+              <Sparkles size={16} />
+              <span>Attributes Master</span>
             </button>
           </div>
+
+          {/* Add New Product Button */}
+          <button
+            className="btn-primary admin-btn"
+            onClick={() => {
+              setShowModal(true);
+              if (masterAttributes.length === 0) fetchProducts();
+            }}
+          >
+            <Plus size={18} />
+            <span>Add New Product</span>
+          </button>
         </div>
 
         {/* -------------------- 📤 BULK UPLOAD MODAL -------------------- */}
         {showBulkModal && (
-          <div className="cart-overlay">
-            <div className="auth-card" style={{ maxWidth: '580px', width: '92%' }}>
+          <div
+            className="cart-overlay"
+            onClick={() => {
+              setShowBulkModal(false);
+              setBulkMessage(null);
+            }}
+          >
+            <div
+              className="auth-card"
+              style={{ maxWidth: '580px', width: '92%' }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div
@@ -502,8 +740,12 @@ const AdminProductsPage = () => {
 
         {/* -------------------- ➕ ADD PRODUCT MODAL -------------------- */}
         {showModal && (
-          <div className="cart-overlay">
-            <div className="auth-card" style={{ maxWidth: '640px', width: '92%', maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="cart-overlay" onClick={resetForm}>
+            <div
+              className="auth-card"
+              style={{ maxWidth: '640px', width: '92%', maxHeight: '90vh', overflowY: 'auto' }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h2 style={{ fontSize: '1.3rem', fontWeight: 700, margin: 0 }}>Add New Product</h2>
                 <button className="icon-btn" onClick={resetForm}><X size={18} /></button>
@@ -878,22 +1120,846 @@ const AdminProductsPage = () => {
           </div>
         )}
 
+        {/* -------------------- 👁️ & ➕ MANAGE VARIANTS MODAL -------------------- */}
+        {selectedProductForVariants && (
+          <div
+            className="cart-overlay"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
+            onClick={() => setSelectedProductForVariants(null)}
+          >
+            <div
+              className="auth-card"
+              style={{
+                maxWidth: '860px',
+                width: '94%',
+                maxHeight: '92vh',
+                overflowY: 'auto',
+                background: '#ffffff',
+                border: '1px solid #e3e6f0',
+                borderRadius: '14px',
+                padding: '24px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.15)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e3e6f0', paddingBottom: '16px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                  <img
+                    src={
+                      selectedProductForVariants.imageUrl
+                        ? selectedProductForVariants.imageUrl.startsWith('http')
+                          ? selectedProductForVariants.imageUrl
+                          : `http://localhost:5000${selectedProductForVariants.imageUrl}`
+                        : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200'
+                    }
+                    alt={selectedProductForVariants.name}
+                    style={{ width: '56px', height: '56px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #d1d3e2' }}
+                  />
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#4e73df', fontWeight: 800 }}>
+                        {selectedProductForVariants.category?.name || 'Product'} • SKU: {selectedProductForVariants.sku || `PRD-${selectedProductForVariants.id}`}
+                      </span>
+                    </div>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 4px 0', color: '#2e384d' }}>
+                      {selectedProductForVariants.name}
+                    </h2>
+                    <div style={{ fontSize: '0.8rem', color: '#858796' }}>
+                      Base Price: <strong style={{ color: '#1cc88a' }}>₹{selectedProductForVariants.price?.toLocaleString('en-IN')}</strong>
+                      {selectedProductForVariants.mrp && ` (MRP: ₹${selectedProductForVariants.mrp?.toLocaleString('en-IN')})`}
+                      {' • '}Total Combined Stock: <strong>{selectedProductForVariants.stock} units</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  className="icon-btn"
+                  onClick={() => setSelectedProductForVariants(null)}
+                  style={{ background: '#f8f9fc', border: '1px solid #e3e6f0', color: '#858796', cursor: 'pointer', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Notification Toast */}
+              {variantActionMsg && (
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    marginBottom: '18px',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    background: variantActionMsg.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                    border: `1px solid ${variantActionMsg.type === 'success' ? '#22c55e' : '#ef4444'}`,
+                    color: variantActionMsg.type === 'success' ? '#22c55e' : '#ef4444'
+                  }}
+                >
+                  {variantActionMsg.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                  <span>{variantActionMsg.text}</span>
+                </div>
+              )}
+
+              {/* SECTION 1: Existing Variants List */}
+              <div style={{ marginBottom: '28px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#2e384d' }}>
+                    <Layers size={18} color="#4e73df" />
+                    <span>Existing Variants ({selectedProductForVariants.variants?.length || 0})</span>
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: '#858796' }}>
+                    Each variant has independent pricing, stock & SKU
+                  </span>
+                </div>
+
+                {(!selectedProductForVariants.variants || selectedProductForVariants.variants.length === 0) ? (
+                  <div
+                    style={{
+                      padding: '24px',
+                      textAlign: 'center',
+                      borderRadius: '8px',
+                      background: '#f8f9fc',
+                      border: '1px dashed #d1d3e2',
+                      color: '#858796',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Is product ke liye abhi koi variant nahi hai. Neeche diye gaye form se naya variant add karein! 👇
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {selectedProductForVariants.variants.map((v) => {
+                      const isEditingThis = editingVariantId === v.id;
+                      let parsedAttrs = null;
+                      try {
+                        parsedAttrs = v.attributes ? JSON.parse(v.attributes) : null;
+                      } catch (e) {
+                        parsedAttrs = null;
+                      }
+
+                      const displayImg = v.imageUrl
+                        ? (v.imageUrl.startsWith('http') ? v.imageUrl : `http://localhost:5000${v.imageUrl}`)
+                        : selectedProductForVariants.imageUrl
+                        ? (selectedProductForVariants.imageUrl.startsWith('http') ? selectedProductForVariants.imageUrl : `http://localhost:5000${selectedProductForVariants.imageUrl}`)
+                        : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100';
+
+                      if (isEditingThis) {
+                        return (
+                          <div
+                            key={v.id}
+                            style={{
+                              padding: '14px',
+                              borderRadius: '8px',
+                              background: 'rgba(78, 115, 223, 0.05)',
+                              border: '1px solid #4e73df'
+                            }}
+                          >
+                            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#4e73df', marginBottom: '8px' }}>
+                              ✏️ Edit Variant: {v.sku}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                              <div>
+                                <label style={{ fontSize: '0.7rem', color: '#858796', fontWeight: 600 }}>Variant Title</label>
+                                <input
+                                  className="form-control"
+                                  style={{ fontSize: '0.8rem', padding: '6px 8px', background: '#ffffff', border: '1px solid #d1d3e2', color: '#2e384d' }}
+                                  value={editVarTitle}
+                                  onChange={(e) => setEditVarTitle(e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '0.7rem', color: '#858796', fontWeight: 600 }}>Price (₹)</label>
+                                <input
+                                  className="form-control"
+                                  type="number"
+                                  style={{ fontSize: '0.8rem', padding: '6px 8px', background: '#ffffff', border: '1px solid #d1d3e2', color: '#2e384d' }}
+                                  value={editVarPrice}
+                                  onChange={(e) => setEditVarPrice(e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '0.7rem', color: '#858796', fontWeight: 600 }}>MRP (₹)</label>
+                                <input
+                                  className="form-control"
+                                  type="number"
+                                  style={{ fontSize: '0.8rem', padding: '6px 8px', background: '#ffffff', border: '1px solid #d1d3e2', color: '#2e384d' }}
+                                  value={editVarMrp}
+                                  onChange={(e) => setEditVarMrp(e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <label style={{ fontSize: '0.7rem', color: '#858796', fontWeight: 600 }}>Stock</label>
+                                <input
+                                  className="form-control"
+                                  type="number"
+                                  style={{ fontSize: '0.8rem', padding: '6px 8px', background: '#ffffff', border: '1px solid #d1d3e2', color: '#2e384d' }}
+                                  value={editVarStock}
+                                  onChange={(e) => setEditVarStock(e.target.value)}
+                                />
+                              </div>
+                            </div>
+                            <div style={{ marginBottom: '10px' }}>
+                              <label style={{ fontSize: '0.7rem', color: '#858796', fontWeight: 600 }}>Variant Image URL (Optional)</label>
+                              <input
+                                className="form-control"
+                                style={{ fontSize: '0.8rem', padding: '6px 8px', background: '#ffffff', border: '1px solid #d1d3e2', color: '#2e384d' }}
+                                value={editVarImageUrl}
+                                onChange={(e) => setEditVarImageUrl(e.target.value)}
+                                placeholder="https://..."
+                              />
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                              <button
+                                type="button"
+                                className="btn-outline admin-btn"
+                                style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+                                onClick={() => setEditingVariantId(null)}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-primary admin-btn"
+                                style={{ padding: '6px 14px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                disabled={savingVariant}
+                                onClick={() => handleSaveEditVariant(v.id)}
+                              >
+                                <Save size={14} />
+                                <span>{savingVariant ? 'Saving...' : 'Save Changes'}</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          key={v.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '12px 14px',
+                            borderRadius: '8px',
+                            background: '#f8f9fc',
+                            border: '1px solid #e3e6f0',
+                            flexWrap: 'wrap',
+                            gap: '12px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ position: 'relative' }}>
+                              <img
+                                src={displayImg}
+                                alt={v.title}
+                                style={{ width: '44px', height: '44px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #d1d3e2' }}
+                              />
+                              {!v.imageUrl && (
+                                <span
+                                  title="Inherits photo from parent product"
+                                  style={{
+                                    position: 'absolute',
+                                    bottom: '-4px',
+                                    right: '-4px',
+                                    fontSize: '0.55rem',
+                                    background: '#4e73df',
+                                    color: '#ffffff',
+                                    borderRadius: '3px',
+                                    padding: '0 3px',
+                                    fontWeight: 700
+                                  }}
+                                >
+                                  Auto
+                                </span>
+                              )}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#2e384d' }}>
+                                {v.title}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                <code style={{ fontSize: '0.7rem', color: '#858796' }}>{v.sku}</code>
+                                {parsedAttrs &&
+                                  Object.entries(parsedAttrs).map(([k, val]) => (
+                                    <span
+                                      key={k}
+                                      style={{
+                                        fontSize: '0.68rem',
+                                        background: 'rgba(78, 115, 223, 0.1)',
+                                        color: '#4e73df',
+                                        padding: '1px 6px',
+                                        borderRadius: '4px',
+                                        fontWeight: 700
+                                      }}
+                                    >
+                                      {k}: {val}
+                                    </span>
+                                  ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+                            <div>
+                              <div style={{ fontWeight: 800, color: '#1cc88a', fontSize: '0.95rem' }}>
+                                ₹{v.price?.toLocaleString('en-IN')}
+                              </div>
+                              {v.mrp && v.mrp > v.price && (
+                                <span style={{ fontSize: '0.72rem', textDecoration: 'line-through', color: '#858796' }}>
+                                  ₹{v.mrp?.toLocaleString('en-IN')}
+                                </span>
+                              )}
+                            </div>
+
+                            <div>
+                              <span
+                                style={{
+                                  fontSize: '0.8rem',
+                                  fontWeight: 700,
+                                  color: v.stock <= 5 ? '#e74a3b' : '#1cc88a'
+                                }}
+                              >
+                                {v.stock} units
+                              </span>
+                              {v.stock <= 5 && (
+                                <div style={{ fontSize: '0.65rem', color: '#e74a3b', fontWeight: 700 }}>
+                                  Low Stock
+                                </div>
+                              )}
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                className="icon-btn"
+                                title="Edit Variant"
+                                onClick={() => handleStartEditVariant(v)}
+                                style={{ color: '#4e73df' }}
+                              >
+                                <Edit2 size={15} />
+                              </button>
+                              <button
+                                className="icon-btn"
+                                title="Delete Variant"
+                                onClick={() => handleDeleteVariant(v.id)}
+                                style={{ color: '#e74a3b' }}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* SECTION 2: ➕ Add New Variant Form */}
+              <div
+                style={{
+                  background: 'rgba(78, 115, 223, 0.04)',
+                  border: '1px solid rgba(78, 115, 223, 0.25)',
+                  borderRadius: '10px',
+                  padding: '18px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                  <Plus size={18} color="#4e73df" />
+                  <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0, color: '#4e73df' }}>
+                    Add New Variant to this Product
+                  </h3>
+                </div>
+
+                <form onSubmit={handleAddVariantToProduct}>
+                  {/* Attributes Selection */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                    {/* Attribute 1 */}
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                        Option 1 (e.g. Weight, Size, Color)
+                      </label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '4px' }}>
+                        <select
+                          className="form-control"
+                          style={{ fontSize: '0.8rem', padding: '6px 8px' }}
+                          value={newVarAttr1Name}
+                          onChange={(e) => {
+                            const sel = masterAttributes.find((a) => a.name === e.target.value);
+                            setNewVarAttr1Name(e.target.value);
+                            const val = sel?.values[0]?.value || '';
+                            setNewVarAttr1Val(val);
+                            setNewVarTitle(val ? `${e.target.value}: ${val}` : '');
+                          }}
+                        >
+                          {masterAttributes.map((a) => (
+                            <option key={a.id} value={a.name}>{a.name}</option>
+                          ))}
+                          <option value="Custom">Custom...</option>
+                        </select>
+
+                        {newVarAttr1Name === 'Custom' ? (
+                          <input
+                            className="form-control"
+                            style={{ fontSize: '0.8rem', padding: '6px 8px' }}
+                            placeholder="Attribute Value"
+                            value={newVarAttr1Val}
+                            onChange={(e) => {
+                              setNewVarAttr1Val(e.target.value);
+                              setNewVarTitle(e.target.value);
+                            }}
+                          />
+                        ) : (
+                          <select
+                            className="form-control"
+                            style={{ fontSize: '0.8rem', padding: '6px 8px' }}
+                            value={newVarAttr1Val}
+                            onChange={(e) => {
+                              setNewVarAttr1Val(e.target.value);
+                              const t2 = newVarAttr2Val ? ` / ${newVarAttr2Name}: ${newVarAttr2Val}` : '';
+                              setNewVarTitle(`${newVarAttr1Name}: ${e.target.value}${t2}`);
+                            }}
+                          >
+                            <option value="">-- Choose Value --</option>
+                            {masterAttributes
+                              .find((a) => a.name === newVarAttr1Name)
+                              ?.values.map((val) => (
+                                <option key={val.id} value={val.value}>{val.value}</option>
+                              ))}
+                          </select>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Attribute 2 (Optional) */}
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                        Option 2 (Optional, e.g. Color, Grip)
+                      </label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '4px' }}>
+                        <select
+                          className="form-control"
+                          style={{ fontSize: '0.8rem', padding: '6px 8px' }}
+                          value={newVarAttr2Name}
+                          onChange={(e) => {
+                            const sel = masterAttributes.find((a) => a.name === e.target.value);
+                            setNewVarAttr2Name(e.target.value);
+                            const val = sel?.values[0]?.value || '';
+                            setNewVarAttr2Val(val);
+                            if (val && newVarAttr1Val) {
+                              setNewVarTitle(`${newVarAttr1Name}: ${newVarAttr1Val} / ${e.target.value}: ${val}`);
+                            }
+                          }}
+                        >
+                          <option value="">-- None --</option>
+                          {masterAttributes.map((a) => (
+                            <option key={a.id} value={a.name}>{a.name}</option>
+                          ))}
+                          <option value="Custom">Custom...</option>
+                        </select>
+
+                        {newVarAttr2Name && (
+                          newVarAttr2Name === 'Custom' ? (
+                            <input
+                              className="form-control"
+                              style={{ fontSize: '0.8rem', padding: '6px 8px' }}
+                              placeholder="Option 2 Value"
+                              value={newVarAttr2Val}
+                              onChange={(e) => setNewVarAttr2Val(e.target.value)}
+                            />
+                          ) : (
+                            <select
+                              className="form-control"
+                              style={{ fontSize: '0.8rem', padding: '6px 8px' }}
+                              value={newVarAttr2Val}
+                              onChange={(e) => {
+                                setNewVarAttr2Val(e.target.value);
+                                if (newVarAttr1Val) {
+                                  setNewVarTitle(`${newVarAttr1Name}: ${newVarAttr1Val} / ${newVarAttr2Name}: ${e.target.value}`);
+                                }
+                              }}
+                            >
+                              <option value="">-- Choose Value --</option>
+                              {masterAttributes
+                                .find((a) => a.name === newVarAttr2Name)
+                                ?.values.map((val) => (
+                                  <option key={val.id} value={val.value}>{val.value}</option>
+                                ))}
+                            </select>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Variant Title */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                      Variant Display Title (Visible to Customers)
+                    </label>
+                    <input
+                      className="form-control"
+                      style={{ fontSize: '0.85rem', padding: '8px 10px', marginTop: '4px' }}
+                      value={newVarTitle}
+                      onChange={(e) => setNewVarTitle(e.target.value)}
+                      placeholder="e.g. Weight: 20kg Pair / Color: Matte Black"
+                      required
+                    />
+                  </div>
+
+                  {/* Price, MRP, Stock & SKU */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                        Variant Price (₹) *
+                      </label>
+                      <input
+                        className="form-control"
+                        type="number"
+                        step="0.01"
+                        required
+                        style={{ fontSize: '0.85rem', padding: '8px 10px', marginTop: '4px' }}
+                        value={newVarPrice}
+                        onChange={(e) => setNewVarPrice(e.target.value)}
+                        placeholder="₹ Price"
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                        MRP / Strike (₹)
+                      </label>
+                      <input
+                        className="form-control"
+                        type="number"
+                        step="0.01"
+                        style={{ fontSize: '0.85rem', padding: '8px 10px', marginTop: '4px' }}
+                        value={newVarMrp}
+                        onChange={(e) => setNewVarMrp(e.target.value)}
+                        placeholder="₹ MRP"
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                        Stock Units
+                      </label>
+                      <input
+                        className="form-control"
+                        type="number"
+                        required
+                        style={{ fontSize: '0.85rem', padding: '8px 10px', marginTop: '4px' }}
+                        value={newVarStock}
+                        onChange={(e) => setNewVarStock(e.target.value)}
+                        placeholder="10"
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                        Custom SKU (Opt)
+                      </label>
+                      <input
+                        className="form-control"
+                        style={{ fontSize: '0.85rem', padding: '8px 10px', marginTop: '4px' }}
+                        value={newVarSku}
+                        onChange={(e) => setNewVarSku(e.target.value)}
+                        placeholder="Auto-generated"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Variant Photo URL & Download Locally */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px', marginBottom: '14px', alignItems: 'center' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                        Variant Specific Photo URL (Optional - leaves fallback to product photo)
+                      </label>
+                      <input
+                        className="form-control"
+                        style={{ fontSize: '0.85rem', padding: '8px 10px', marginTop: '4px' }}
+                        value={newVarImageUrl}
+                        onChange={(e) => setNewVarImageUrl(e.target.value)}
+                        placeholder="https://images.unsplash.com/..."
+                      />
+                    </div>
+
+                    <div style={{ marginTop: '16px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.8rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={newVarDownloadImages}
+                          onChange={(e) => setNewVarDownloadImages(e.target.checked)}
+                        />
+                        <span>Download Photo Locally</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    style={{ width: '100%', padding: '10px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    disabled={addingVariant}
+                  >
+                    <Plus size={18} />
+                    <span>{addingVariant ? 'Adding Variant...' : 'Add Variant to Product'}</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* -------------------- ⚙️ MASTER ATTRIBUTES MODAL -------------------- */}
+        {showAttributesModal && (
+          <div
+            className="cart-overlay"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
+            onClick={() => setShowAttributesModal(false)}
+          >
+            <div
+              className="auth-card"
+              style={{
+                maxWidth: '750px',
+                width: '92%',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                background: '#ffffff',
+                border: '1px solid #e3e6f0',
+                borderRadius: '14px',
+                padding: '24px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.15)'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e3e6f0', paddingBottom: '14px', marginBottom: '18px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(78, 115, 223, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4e73df' }}>
+                    <Sparkles size={22} />
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#2e384d' }}>
+                      Master Product Attributes
+                    </h2>
+                    <div style={{ fontSize: '0.78rem', color: '#858796', marginTop: '2px' }}>
+                      Pre-defined options for Colors, Sizes, Weights, Heights, and custom specs
+                    </div>
+                  </div>
+                </div>
+                <button
+                  className="icon-btn"
+                  onClick={() => setShowAttributesModal(false)}
+                  style={{ background: '#f8f9fc', border: '1px solid #e3e6f0', color: '#858796', cursor: 'pointer', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Attributes List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '24px' }}>
+                {masterAttributes.map((attr) => (
+                  <div
+                    key={attr.id}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '10px',
+                      background: '#f8f9fc',
+                      border: '1px solid #e3e6f0'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#4e73df' }}>
+                          {attr.name}
+                        </span>
+                        <code style={{ fontSize: '0.75rem', background: '#eaecf4', color: '#5a5c69', padding: '2px 8px', borderRadius: '4px' }}>
+                          {attr.slug}
+                        </code>
+                      </div>
+                      <span style={{ fontSize: '0.78rem', color: '#858796', fontWeight: 600 }}>
+                        {attr.values?.length || 0} options
+                      </span>
+                    </div>
+
+                    {/* Values pills */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
+                      {attr.values?.map((val) => (
+                        <span
+                          key={val.id}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '5px 10px',
+                            borderRadius: '6px',
+                            background: '#ffffff',
+                            border: '1px solid #d1d3e2',
+                            fontSize: '0.82rem',
+                            color: '#2e384d',
+                            fontWeight: 600,
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                          }}
+                        >
+                          {val.colorCode && (
+                            <span
+                              style={{
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                background: val.colorCode,
+                                border: '1px solid rgba(0,0,0,0.2)',
+                                display: 'inline-block'
+                              }}
+                            />
+                          )}
+                          <span>{val.value}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAttributeValue(val.id)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#858796',
+                              cursor: 'pointer',
+                              padding: 0,
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                            title="Delete Option"
+                          >
+                            <X size={14} />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Quick add value row */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        className="form-control"
+                        style={{ fontSize: '0.82rem', padding: '8px 12px', flex: 1, background: '#ffffff', border: '1px solid #d1d3e2', color: '#2e384d' }}
+                        placeholder={`Add new ${attr.name} option (e.g. 30kg, UK 12)`}
+                        value={newValInputs[attr.id]?.value || ''}
+                        onChange={(e) =>
+                          setNewValInputs({
+                            ...newValInputs,
+                            [attr.id]: { ...(newValInputs[attr.id] || {}), value: e.target.value }
+                          })
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddAttributeValue(attr.id);
+                          }
+                        }}
+                      />
+                      {attr.name.toLowerCase().includes('color') && (
+                        <input
+                          type="color"
+                          title="Choose Color Hex Code"
+                          style={{
+                            width: '40px',
+                            height: '38px',
+                            border: '1px solid #d1d3e2',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            background: '#ffffff',
+                            padding: '2px'
+                          }}
+                          value={newValInputs[attr.id]?.colorCode || '#ff0000'}
+                          onChange={(e) =>
+                            setNewValInputs({
+                              ...newValInputs,
+                              [attr.id]: { ...(newValInputs[attr.id] || {}), colorCode: e.target.value }
+                            })
+                          }
+                        />
+                      )}
+                      <button
+                        type="button"
+                        className="btn-outline admin-btn"
+                        style={{ fontSize: '0.8rem', padding: '8px 14px' }}
+                        onClick={() => handleAddAttributeValue(attr.id)}
+                      >
+                        + Add Option
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add New Master Attribute Category */}
+              <div
+                style={{
+                  background: 'rgba(78, 115, 223, 0.05)',
+                  border: '1px solid rgba(78, 115, 223, 0.25)',
+                  borderRadius: '10px',
+                  padding: '16px'
+                }}
+              >
+                <div style={{ fontWeight: 800, fontSize: '0.88rem', color: '#4e73df', marginBottom: '8px' }}>
+                  ➕ Create New Attribute Category
+                </div>
+                <form onSubmit={handleCreateMasterAttribute} style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    className="form-control"
+                    style={{ fontSize: '0.85rem', padding: '9px 14px', flex: 1, background: '#ffffff', border: '1px solid #d1d3e2', color: '#2e384d' }}
+                    placeholder="e.g. Flavour, Material, Grip Thickness, Sole Type"
+                    value={newMasterAttrName}
+                    onChange={(e) => setNewMasterAttrName(e.target.value)}
+                    required
+                  />
+                  <button type="submit" className="btn-primary admin-btn" style={{ padding: '9px 18px', fontSize: '0.85rem' }}>
+                    Create Attribute
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* -------------------- 📋 PRODUCTS TABLE -------------------- */}
-        <div className="profile-card">
+        <div className="admin-card">
+          <div className="admin-card-header">
+            <h3 className="admin-card-title">
+              <Package size={20} color="var(--admin-primary)" />
+              <span>Products Catalog List</span>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  background: 'rgba(78, 115, 223, 0.1)',
+                  color: 'var(--admin-primary)',
+                  fontWeight: 700
+                }}
+              >
+                {products.length} Products
+              </span>
+            </h3>
+            <div style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>
+              Manage variants, stock, and batch inventory
+            </div>
+          </div>
+
           {loading ? (
-            <p style={{ color: 'var(--text-muted)' }}>Loading products...</p>
+            <p style={{ color: 'var(--admin-text-muted)', padding: '20px 0' }}>Loading products...</p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <table className="admin-table">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    <th style={{ padding: '12px' }}>Product</th>
-                    <th style={{ padding: '12px' }}>Category</th>
-                    <th style={{ padding: '12px' }}>Brand</th>
-                    <th style={{ padding: '12px' }}>Pricing & MRP</th>
-                    <th style={{ padding: '12px' }}>Variants</th>
-                    <th style={{ padding: '12px' }}>Stock</th>
-                    <th style={{ padding: '12px', textAlign: 'right' }}>Actions</th>
+                  <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Brand</th>
+                    <th>Pricing & MRP</th>
+                    <th>Variants</th>
+                    <th>Stock</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -982,25 +2048,32 @@ const AdminProductsPage = () => {
                           <td style={{ padding: '12px' }}>
                             {p.hasVariants && p.variants && p.variants.length > 0 ? (
                               <div>
-                                <span
+                                <button
+                                  type="button"
+                                  onClick={() => openVariantsModal(p)}
                                   style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
-                                    gap: '4px',
-                                    padding: '2px 8px',
-                                    borderRadius: '10px',
+                                    gap: '5px',
+                                    padding: '4px 10px',
+                                    borderRadius: '8px',
                                     background: 'rgba(59, 130, 246, 0.15)',
+                                    border: '1px solid rgba(59, 130, 246, 0.35)',
                                     color: '#60a5fa',
-                                    fontSize: '0.75rem',
+                                    fontSize: '0.78rem',
                                     fontWeight: 700,
-                                    marginBottom: '4px'
+                                    cursor: 'pointer',
+                                    marginBottom: '4px',
+                                    transition: 'all 0.15s ease'
                                   }}
+                                  title="Click to view and add variants"
                                 >
-                                  <Layers size={12} />
-                                  {p.variants.length} Variants
-                                </span>
+                                  <Layers size={13} />
+                                  <span>{p.variants.length} Variants</span>
+                                  <Eye size={12} style={{ opacity: 0.8 }} />
+                                </button>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', maxWidth: '200px' }}>
-                                  {p.variants.slice(0, 3).map((v) => (
+                                  {p.variants.slice(0, 2).map((v) => (
                                     <span
                                       key={v.id}
                                       style={{
@@ -1014,15 +2087,40 @@ const AdminProductsPage = () => {
                                       {v.title}
                                     </span>
                                   ))}
-                                  {p.variants.length > 3 && (
+                                  {p.variants.length > 2 && (
                                     <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                                      +{p.variants.length - 3} more
+                                      +{p.variants.length - 2} more
                                     </span>
                                   )}
                                 </div>
                               </div>
                             ) : (
-                              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Single</span>
+                              <div>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '2px' }}>
+                                  Single SKU
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => openVariantsModal(p)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(201, 168, 76, 0.12)',
+                                    border: '1px solid rgba(201, 168, 76, 0.3)',
+                                    color: 'var(--gold)',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                  title="Add variants to this product"
+                                >
+                                  <Plus size={12} />
+                                  <span>Add Variant</span>
+                                </button>
+                              </div>
                             )}
                           </td>
 
@@ -1046,14 +2144,24 @@ const AdminProductsPage = () => {
 
                           {/* Actions */}
                           <td style={{ padding: '12px', textAlign: 'right' }}>
-                            <button
-                              className="icon-btn"
-                              style={{ color: 'var(--danger)', borderColor: 'transparent' }}
-                              onClick={() => handleDeleteProduct(p.id)}
-                              title="Delete Product"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                              <button
+                                className="icon-btn"
+                                style={{ color: 'var(--gold)', borderColor: 'rgba(201, 168, 76, 0.3)' }}
+                                onClick={() => openVariantsModal(p)}
+                                title="View & Manage Variants"
+                              >
+                                <Layers size={16} />
+                              </button>
+                              <button
+                                className="icon-btn"
+                                style={{ color: 'var(--danger)', borderColor: 'transparent' }}
+                                onClick={() => handleDeleteProduct(p.id)}
+                                title="Delete Product"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );

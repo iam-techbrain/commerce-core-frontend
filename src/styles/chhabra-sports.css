@@ -512,6 +512,31 @@ nav.primary > .nav-item:hover > a {
   border-color: var(--parchment) !important;
 }
 
+.admin-main .btn-outline {
+  border-color: rgba(20, 25, 22, 0.3) !important;
+  color: var(--pitch) !important;
+  background: rgba(20, 25, 22, 0.05) !important;
+  font-weight: 600;
+}
+
+.admin-main .btn-outline:hover {
+  border-color: var(--pitch) !important;
+  background: rgba(20, 25, 22, 0.12) !important;
+}
+
+.auth-card .btn-outline,
+.cart-overlay .btn-outline {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.auth-card .btn-outline:hover,
+.cart-overlay .btn-outline:hover {
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+}
+
 .hero-visual {
   position: relative;
   overflow: hidden;

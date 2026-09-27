@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
 import API from '../../api/axios';
 import AdminLayout from '../../components/admin/AdminLayout';
-import { Plus, Trash2, Tag, X } from 'lucide-react';
+import { Plus, Trash2, Tag, X, Home, ChevronRight } from 'lucide-react';
 
 const AdminBrandsPage = () => {
   const [brands, setBrands] = useState([]);
@@ -41,9 +42,11 @@ const AdminBrandsPage = () => {
       });
 
       if (res.data.success) {
-        alert('Brand add ho gaya! 🏷️');
+        alert('Brand successfully add ho gaya! 🏷️');
         setShowModal(false);
-        setName(''); setDescription(''); setLogoFile(null);
+        setName('');
+        setDescription('');
+        setLogoFile(null);
         fetchBrands();
       }
     } catch (err) {
@@ -67,87 +70,183 @@ const AdminBrandsPage = () => {
   return (
     <AdminLayout>
       <div>
-        <div className="section-header" style={{ marginBottom: '28px' }}>
-          <h1 className="section-title">Manage Brands</h1>
-          <button className="btn-primary" onClick={() => setShowModal(true)}>
-            <Plus size={18} /> Add New Brand
+        {/* Admin Page Header with Breadcrumb */}
+        <div className="admin-page-header">
+          <div className="admin-page-title-group">
+            <h1>Manage Brands</h1>
+            <p>Maintain authorized manufacturer brands, logos, and athletic partnerships.</p>
+          </div>
+
+          <div className="admin-breadcrumb">
+            <NavLink to="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Home size={14} />
+              <span>Home</span>
+            </NavLink>
+            <ChevronRight size={12} style={{ opacity: 0.5 }} />
+            <span>Brands</span>
+          </div>
+        </div>
+
+        {/* Action Toolbar */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
+          <button
+            className="btn-primary"
+            onClick={() => setShowModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'var(--admin-primary)',
+              borderColor: 'var(--admin-primary)',
+              boxShadow: '0 4px 12px rgba(78, 115, 223, 0.25)'
+            }}
+          >
+            <Plus size={18} />
+            <span>Add New Brand</span>
           </button>
         </div>
 
         {/* Modal Form */}
         {showModal && (
-          <div className="cart-overlay">
-            <div className="auth-card" style={{ maxWidth: '480px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '1.3rem', fontWeight: 700 }}>Add New Brand</h2>
-                <button className="icon-btn" onClick={() => setShowModal(false)}><X size={18} /></button>
+          <div
+            className="cart-overlay"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
+            onClick={() => setShowModal(false)}
+          >
+            <div
+              className="auth-card"
+              style={{ maxWidth: '480px', width: '92%', borderRadius: '12px', padding: '24px' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--admin-border)', paddingBottom: '12px' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--admin-text-dark)' }}>
+                  Add New Brand
+                </h2>
+                <button
+                  className="icon-btn"
+                  onClick={() => setShowModal(false)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                >
+                  <X size={20} />
+                </button>
               </div>
 
               <form onSubmit={handleCreateBrand}>
                 <div className="form-group">
-                  <label>Brand Name</label>
-                  <input className="form-control" required placeholder="e.g. Nike, Adidas, Cosco" value={name} onChange={(e) => setName(e.target.value)} />
+                  <label>Brand Name *</label>
+                  <input
+                    className="form-control"
+                    required
+                    placeholder="e.g. Yonex, Wilson, Cosco"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Description</label>
-                  <textarea className="form-control" rows={3} placeholder="Brand details or tagline" value={description} onChange={(e) => setDescription(e.target.value)} />
+                  <textarea
+                    className="form-control"
+                    rows={3}
+                    placeholder="Brand details or tagline"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Brand Logo</label>
-                  <input className="form-control" type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files[0])} />
+                  <input
+                    className="form-control"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setLogoFile(e.target.files[0])}
+                  />
                 </div>
-                <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '12px' }}>
-                  Save Brand
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  style={{ width: '100%', marginTop: '16px', background: 'var(--admin-primary)', borderColor: 'var(--admin-primary)' }}
+                >
+                  Save & Publish Brand
                 </button>
               </form>
             </div>
           </div>
         )}
 
-        {/* Brands Table */}
-        <div className="profile-card">
+        {/* Brands Table Card */}
+        <div className="admin-card">
+          <div className="admin-card-header">
+            <h3 className="admin-card-title">
+              <Tag size={20} color="var(--admin-primary)" />
+              <span>All Brands ({brands.length})</span>
+            </h3>
+            <span style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>
+              Official brand partners
+            </span>
+          </div>
+
           {loading ? (
-            <p style={{ color: 'var(--text-muted)' }}>Loading brands...</p>
+            <p style={{ color: 'var(--admin-text-muted)', padding: '20px 0' }}>Loading brands...</p>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                  <th style={{ padding: '12px' }}>Brand Name</th>
-                  <th style={{ padding: '12px' }}>Description</th>
-                  <th style={{ padding: '12px' }}>Product Count</th>
-                  <th style={{ padding: '12px', textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {brands.length === 0 ? (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="admin-table">
+                <thead>
                   <tr>
-                    <td colSpan={4} style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                      Koi Brand nahi mila. Naya brand add karein!
-                    </td>
+                    <th>Brand Name</th>
+                    <th>Description</th>
+                    <th>Product Count</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
-                ) : (
-                  brands.map((b) => (
-                    <tr key={b.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
-                      <td style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img
-                          src={b.logoUrl ? `http://localhost:5000${b.logoUrl}` : 'https://via.placeholder.com/40?text=Brand'}
-                          alt={b.name}
-                          style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }}
-                        />
-                        <span style={{ fontWeight: 600 }}>{b.name}</span>
-                      </td>
-                      <td style={{ padding: '12px', color: 'var(--text-muted)' }}>{b.description || 'N/A'}</td>
-                      <td style={{ padding: '12px', fontWeight: 700 }}>{b._count?.products || 0} Products</td>
-                      <td style={{ padding: '12px', textAlign: 'right' }}>
-                        <button className="icon-btn" style={{ color: 'var(--danger)', borderColor: 'transparent' }} onClick={() => handleDeleteBrand(b.id)}>
-                          <Trash2 size={16} />
-                        </button>
+                </thead>
+                <tbody>
+                  {brands.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} style={{ padding: '28px', textAlign: 'center', color: 'var(--admin-text-muted)' }}>
+                        No brands found. Click "Add New Brand" to create one.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    brands.map((b) => (
+                      <tr key={b.id}>
+                        <td style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <img
+                            src={b.logoUrl ? (b.logoUrl.startsWith('http') ? b.logoUrl : `http://localhost:5000${b.logoUrl}`) : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100'}
+                            alt={b.name}
+                            style={{ width: '42px', height: '42px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
+                          />
+                          <span style={{ fontWeight: 700, color: 'var(--admin-text-dark)' }}>{b.name}</span>
+                        </td>
+                        <td style={{ color: 'var(--admin-text-muted)' }}>{b.description || 'N/A'}</td>
+                        <td>
+                          <span
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: '12px',
+                              background: 'rgba(78, 115, 223, 0.1)',
+                              color: 'var(--admin-primary)',
+                              fontSize: '0.75rem',
+                              fontWeight: 700
+                            }}
+                          >
+                            {b._count?.products || 0} Products
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <button
+                            className="icon-btn"
+                            style={{ color: 'var(--admin-danger)', borderColor: 'transparent' }}
+                            onClick={() => handleDeleteBrand(b.id)}
+                            title="Delete Brand"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>

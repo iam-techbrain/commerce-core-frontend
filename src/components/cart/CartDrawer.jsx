@@ -80,6 +80,22 @@ const CartDrawer = () => {
                   
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="cart-item-title">{item.productName}</div>
+                    {item.variantTitle && (
+                      <div
+                        style={{
+                          fontSize: '0.72rem',
+                          color: 'var(--gold)',
+                          fontWeight: 600,
+                          marginTop: '2px',
+                          display: 'inline-block',
+                          background: 'rgba(201, 168, 76, 0.12)',
+                          padding: '1px 6px',
+                          borderRadius: '4px'
+                        }}
+                      >
+                        Option: {item.variantTitle}
+                      </div>
+                    )}
                     <div className="cart-item-price">₹{(item.price * item.quantity).toLocaleString('en-IN')}</div>
                     
                     <div className="qty-ctrl">

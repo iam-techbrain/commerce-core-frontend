@@ -4,6 +4,7 @@
    ========================================================================= */
 
 @import './chhabra-sports.css';
+@import './admin.css';
 
 /* Override base defaults to ensure parchment court theme is 100% active */
 html, body {

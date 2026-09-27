@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
 import API from '../../api/axios';
 import AdminLayout from '../../components/admin/AdminLayout';
 import AdminStatCard from '../../components/admin/AdminStatCard';
-import { DollarSign, ShoppingCart, Users, Package, AlertTriangle } from 'lucide-react';
+import {
+  DollarSign,
+  ShoppingCart,
+  Users,
+  AlertTriangle,
+  Home,
+  ChevronRight,
+  TrendingUp,
+  Package,
+  Layers
+} from 'lucide-react';
 
 const AdminDashboardPage = () => {
   const [analytics, setAnalytics] = useState(null);
@@ -22,60 +33,136 @@ const AdminDashboardPage = () => {
   return (
     <AdminLayout>
       <div>
-        <div className="section-header" style={{ marginBottom: '28px' }}>
-          <h1 className="section-title">Store Sales & Revenue Analytics</h1>
+        {/* Admin Page Header with Breadcrumb */}
+        <div className="admin-page-header">
+          <div className="admin-page-title-group">
+            <h1>Dashboard</h1>
+            <p>Welcome back to Chhabra Sports store control center</p>
+          </div>
+
+          <div className="admin-breadcrumb">
+            <NavLink to="/admin/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Home size={14} />
+              <span>Home</span>
+            </NavLink>
+            <ChevronRight size={12} style={{ opacity: 0.5 }} />
+            <span>Dashboard</span>
+          </div>
         </div>
 
         {loading ? (
-          <p style={{ color: 'var(--text-muted)' }}>Loading analytics...</p>
+          <div className="admin-card" style={{ textAlign: 'center', padding: '40px' }}>
+            <p style={{ color: 'var(--admin-text-muted)' }}>Loading analytics dashboard...</p>
+          </div>
         ) : !analytics ? (
-          <p style={{ color: 'var(--text-muted)' }}>Analytics dataset unavailable.</p>
+          <div className="admin-card" style={{ textAlign: 'center', padding: '40px' }}>
+            <p style={{ color: 'var(--admin-text-muted)' }}>Analytics dataset currently unavailable.</p>
+          </div>
         ) : (
           <div>
-            {/* Stat Cards Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-              <AdminStatCard title="Total Revenue" value={`₹${analytics.overview.totalRevenue}`} icon={DollarSign} color="99, 102, 241" />
-              <AdminStatCard title="Total Orders" value={analytics.overview.totalOrders} icon={ShoppingCart} color="6, 182, 212" />
-              <AdminStatCard title="Total Customers" value={analytics.overview.totalUsers} icon={Users} color="16, 185, 129" />
-              <AdminStatCard title="Low Stock Items" value={analytics.overview.lowStockProductsCount} icon={AlertTriangle} color="239, 68, 68" />
+            {/* 4 Stat Cards Grid (Exact Admin Style) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '28px' }}>
+              <AdminStatCard
+                title="Earnings (Total)"
+                value={`₹${analytics.overview.totalRevenue?.toLocaleString('en-IN') || 0}`}
+                icon={DollarSign}
+                type="primary"
+                change="+18.4% this month"
+              />
+              <AdminStatCard
+                title="Total Sales"
+                value={analytics.overview.totalOrders || 0}
+                icon={ShoppingCart}
+                type="success"
+                change="+12% since last week"
+              />
+              <AdminStatCard
+                title="Registered Users"
+                value={analytics.overview.totalUsers || 0}
+                icon={Users}
+                type="info"
+                change="+20.4% new signups"
+              />
+              <AdminStatCard
+                title="Low Stock Items"
+                value={analytics.overview.lowStockProductsCount || 0}
+                icon={AlertTriangle}
+                type="warning"
+                change="Requires restocking"
+              />
             </div>
 
-            {/* Recent Orders Table */}
-            <div className="profile-card">
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '20px' }}>Recent Customer Orders</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--card-border)', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    <th style={{ padding: '12px' }}>Order #</th>
-                    <th style={{ padding: '12px' }}>Customer</th>
-                    <th style={{ padding: '12px' }}>Amount</th>
-                    <th style={{ padding: '12px' }}>Payment Status</th>
-                    <th style={{ padding: '12px' }}>Order Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {analytics.recentOrders.map((order) => (
-                    <tr key={order.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
-                      <td style={{ padding: '12px', fontWeight: 600 }}>#{order.orderNumber}</td>
-                      <td style={{ padding: '12px' }}>{order.user?.username || 'Customer'}</td>
-                      <td style={{ padding: '12px', color: 'var(--secondary)', fontWeight: 700 }}>₹{order.finalAmount}</td>
-                      <td style={{ padding: '12px' }}>
-                        <span style={{
-                          padding: '4px 10px',
-                          borderRadius: '99px',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          background: order.paymentStatus === 'PAID' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                          color: order.paymentStatus === 'PAID' ? 'var(--success)' : 'var(--danger)'
-                        }}>
-                          {order.paymentStatus}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px', fontWeight: 600 }}>{order.orderStatus}</td>
+            {/* Recent Orders Table Card */}
+            <div className="admin-card">
+              <div className="admin-card-header">
+                <h3 className="admin-card-title">
+                  <ShoppingCart size={18} color="var(--admin-primary)" />
+                  <span>Recent Customer Orders</span>
+                </h3>
+                <NavLink
+                  to="/admin/orders"
+                  className="btn-outline"
+                  style={{ fontSize: '0.78rem', padding: '6px 14px', borderRadius: '20px' }}
+                >
+                  View All Orders →
+                </NavLink>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Order #</th>
+                      <th>Customer</th>
+                      <th>Amount</th>
+                      <th>Payment Status</th>
+                      <th>Order Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {analytics.recentOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: 'var(--admin-text-muted)' }}>
+                          No recent orders found.
+                        </td>
+                      </tr>
+                    ) : (
+                      analytics.recentOrders.map((order) => (
+                        <tr key={order.id}>
+                          <td style={{ fontWeight: 700, color: 'var(--admin-primary)' }}>
+                            #{order.orderNumber}
+                          </td>
+                          <td style={{ fontWeight: 600 }}>
+                            {order.user?.username || 'Customer'}
+                          </td>
+                          <td style={{ fontWeight: 800, color: '#1e293b' }}>
+                            ₹{order.finalAmount?.toLocaleString('en-IN')}
+                          </td>
+                          <td>
+                            <span
+                              style={{
+                                padding: '3px 10px',
+                                borderRadius: '12px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                background: order.paymentStatus === 'PAID' ? 'rgba(28, 200, 138, 0.15)' : 'rgba(231, 74, 59, 0.15)',
+                                color: order.paymentStatus === 'PAID' ? '#1cc88a' : '#e74a3b'
+                              }}
+                            >
+                              {order.paymentStatus}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
+                              {order.orderStatus}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

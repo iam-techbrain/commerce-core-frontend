@@ -1,73 +1,96 @@
 import React, { useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { Shield, ExternalLink, LogOut, User, Bell } from 'lucide-react';
+import {
+  Menu,
+  Search,
+  Bell,
+  Mail,
+  ListTodo,
+  ExternalLink,
+  LogOut,
+  ChevronDown,
+  Settings
+} from 'lucide-react';
 
-const AdminHeader = () => {
+const AdminHeader = ({ onToggleSidebar }) => {
   const { user, logout } = useContext(AuthContext);
 
   return (
-    <header style={{
-      background: 'var(--card-bg)',
-      borderBottom: '1px solid var(--card-border)',
-      padding: '16px 32px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: '24px'
-    }}>
-      {/* Brand Title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '10px',
-          background: 'rgba(99, 102, 241, 0.15)',
-          color: '#6366f1',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Shield size={22} />
-        </div>
-        <div>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            Store Admin Console
-            <span style={{ fontSize: '0.7rem', padding: '2px 8px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontWeight: 700 }}>
-              LIVE
-            </span>
-          </h2>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Control panel for orders, catalog & system settings</span>
+    <header className="admin-topbar">
+      {/* Left: Hamburger Toggle & Search Bar */}
+      <div className="admin-topbar-left">
+        <button
+          className="admin-toggle-btn"
+          onClick={onToggleSidebar}
+          aria-label="Toggle Sidebar Menu"
+          title="Toggle Sidebar Menu"
+        >
+          <Menu size={20} />
+        </button>
+
+        <div className="admin-search-wrapper">
+          <Search size={16} className="admin-search-icon" />
+          <input
+            type="text"
+            className="admin-search-input"
+            placeholder="Search products, orders, SKU..."
+          />
         </div>
       </div>
 
-      {/* Admin Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {/* Back to Customer Store Button */}
-        <NavLink 
-          to="/" 
-          className="btn-secondary"
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', fontSize: '0.85rem', textDecoration: 'none' }}
+      {/* Right: Notifications, Storefront Shortcut & User Profile */}
+      <div className="admin-topbar-right">
+        {/* View Customer Store Pill */}
+        <NavLink
+          to="/"
+          className="admin-action-pill"
+          title="Open live customer store"
         >
-          <ExternalLink size={16} />
-          <span>View Customer Store</span>
+          <ExternalLink size={15} />
+          <span>Live Store</span>
         </NavLink>
 
-        {/* Logged in Admin badge & Logout */}
+        {/* Notifications Icon with Badge */}
+        <button
+          className="admin-icon-badge-btn"
+          title="System Notifications (3 Low Stock / Orders)"
+        >
+          <Bell size={18} />
+          <span className="admin-count-badge">3+</span>
+        </button>
+
+        {/* Settings Shortcut Icon */}
+        <NavLink
+          to="/admin/settings"
+          className="admin-icon-badge-btn"
+          title="Console Settings & Theme Customizer"
+          style={{ textDecoration: 'none', color: 'inherit' }}
+        >
+          <Settings size={18} />
+        </NavLink>
+
+        {/* Messages Icon */}
+        <button
+          className="admin-icon-badge-btn"
+          title="Support Messages"
+          style={{ display: 'none' }}
+        >
+          <Mail size={18} />
+          <span className="admin-count-badge" style={{ background: '#36b9cc' }}>2</span>
+        </button>
+
+        {/* User Profile Pill */}
         {user && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderLeft: '1px solid var(--card-border)', paddingLeft: '16px' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{user.username}</div>
-              <div style={{ fontSize: '0.75rem', color: '#6366f1', fontWeight: 600 }}>System Admin</div>
+          <div className="admin-profile-pill" onClick={logout} title="Click to Logout">
+            <div className="admin-profile-avatar">
+              {user.username ? user.username.charAt(0).toUpperCase() : 'A'}
             </div>
-            <button 
-              onClick={logout} 
-              className="icon-btn" 
-              title="Logout Admin" 
-              style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }}
-            >
-              <LogOut size={18} />
-            </button>
+            <div className="admin-profile-info">
+              <span className="admin-profile-name">{user.username}</span>
+              <span className="admin-profile-role">Super Admin</span>
+            </div>
+            <LogOut size={15} style={{ color: '#e74a3b', marginLeft: '4px' }} />
           </div>
         )}
       </div>

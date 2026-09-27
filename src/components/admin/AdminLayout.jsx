@@ -1,24 +1,59 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import AdminHeader from './AdminHeader';
 import AdminSidebar from './AdminSidebar';
 import AdminFooter from './AdminFooter';
+import { getSavedTheme, applyAdminTheme } from '../../utils/themeManager';
 
 const AdminLayout = ({ children }) => {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-main)' }}>
-      {/* Admin Dedicated Top Navbar */}
-      <AdminHeader />
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const location = useLocation();
 
-      {/* Admin Content Area (Sidebar + Main Content) */}
-      <div className="container" style={{ flex: 1, display: 'flex', gap: '32px', paddingBottom: '32px' }}>
-        <AdminSidebar />
-        <main style={{ flex: 1, minWidth: 0 }}>
+  // Apply saved theme colors on startup
+  useEffect(() => {
+    applyAdminTheme(getSavedTheme());
+  }, []);
+
+  // Automatically close mobile sidebar on route transition
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [location.pathname]);
+
+  const handleToggleSidebar = () => {
+    if (window.innerWidth < 992) {
+      setMobileSidebarOpen((prev) => !prev);
+    } else {
+      setSidebarCollapsed((prev) => !prev);
+    }
+  };
+
+  return (
+    <div className="admin-app-wrapper">
+      {/* Mobile Drawer Overlay Backdrop */}
+      <div
+        className={`admin-backdrop ${mobileSidebarOpen ? 'active' : ''}`}
+        onClick={() => setMobileSidebarOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* Modern Left Sidebar (Admin / Metronic Style) */}
+      <AdminSidebar
+        collapsed={sidebarCollapsed}
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+      />
+
+      {/* Main Container: Topbar + Page Content + Footer */}
+      <div className="admin-main-wrapper">
+        <AdminHeader onToggleSidebar={handleToggleSidebar} />
+
+        <main className="admin-content-container">
           {children}
         </main>
-      </div>
 
-      {/* Admin Dedicated Footer */}
-      <AdminFooter />
+        <AdminFooter />
+      </div>
     </div>
   );
 };

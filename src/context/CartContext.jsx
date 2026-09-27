@@ -27,9 +27,11 @@ export const CartProvider = ({ children }) => {
     fetchCart();
   }, []);
 
-  const addToCart = async (productId, quantity = 1) => {
+  const addToCart = async (productId, quantity = 1, variantId = null) => {
     try {
-      const res = await API.post('/cart', { productId, quantity });
+      const payload = { productId, quantity };
+      if (variantId) payload.variantId = variantId;
+      const res = await API.post('/cart', payload);
       if (res.data.success) {
         await fetchCart();
         setIsDrawerOpen(true); // Auto-open cart drawer on add
