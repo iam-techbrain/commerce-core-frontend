@@ -7,20 +7,23 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', color: 'var(--text-muted)' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', color: 'var(--ink-soft)' }}>
         Loading authentication status...
       </div>
     );
   }
 
-  // Not logged in -> Redirect to Login page
+  // Not logged in -> Redirect to Admin Login if admin route, else /login
   if (!user) {
+    if (requiredRole === 'ADMIN') {
+      return <Navigate to="/admin/login" replace />;
+    }
     return <Navigate to="/login" replace />;
   }
 
   // Logged in, but does not match required role (e.g. Customer trying to access Admin)
-  if (requiredRole && user.role !== requiredRole && user.email !== 'afzal@schooldigitalised.com') {
-    return <Navigate to="/" replace />;
+  if (requiredRole && user.role !== requiredRole) {
+    return <Navigate to="/admin/login" replace />;
   }
 
   return children;

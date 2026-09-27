@@ -182,7 +182,17 @@ const AdminProductsPage = () => {
                   products.map((p) => (
                     <tr key={p.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
                       <td style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img src={p.imageUrl ? `http://localhost:5000${p.imageUrl}` : 'https://via.placeholder.com/40'} alt={p.name} style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }} />
+                        <img
+                          src={
+                            p.imageUrl
+                              ? p.imageUrl.startsWith('http')
+                                ? p.imageUrl
+                                : `http://localhost:5000${p.imageUrl}`
+                              : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=100'
+                          }
+                          alt={p.name}
+                          style={{ width: '40px', height: '40px', borderRadius: '6px', objectFit: 'cover' }}
+                        />
                         <div>
                           <div style={{ fontWeight: 600 }}>{p.name}</div>
                           {p.description && (
