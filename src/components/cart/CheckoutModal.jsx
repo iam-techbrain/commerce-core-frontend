@@ -4,7 +4,7 @@ import API from '../../api/axios';
 import { AuthContext } from '../../context/AuthContext';
 import { CartContext } from '../../context/CartContext';
 import { loadRazorpayScript } from '../../utils/loadRazorpay';
-import { X, MapPin, CreditCard, ShieldCheck, CheckCircle2, Plus } from 'lucide-react';
+import { X, MapPin, CreditCard, ShieldCheck, CheckCircle2, Plus, Zap } from 'lucide-react';
 
 const CheckoutModal = ({ isOpen, onClose }) => {
   const { user } = useContext(AuthContext);
@@ -30,9 +30,9 @@ const CheckoutModal = ({ isOpen, onClose }) => {
     try {
       const res = await API.get('/addresses');
       if (res.data.success) {
-        setAddresses(res.data.data);
+        setAddresses(res.data.data || []);
         if (res.data.data.length > 0) {
-          const defaultAddr = res.data.data.find(a => a.isDefault) || res.data.data[0];
+          const defaultAddr = res.data.data.find((a) => a.isDefault) || res.data.data[0];
           setSelectedAddressId(defaultAddr.id);
         } else {
           setShowAddAddressForm(true);
@@ -73,9 +73,9 @@ const CheckoutModal = ({ isOpen, onClose }) => {
     }
   };
 
-  const handlePayNow = async () => {
+  const handlePayNow = async (isInstantSimulate = false) => {
     if (!selectedAddressId) {
-      alert('Kripya delivery address select karein ya add karein!');
+      alert('Kripya delivery address select karein ya naya address add karein!');
       return;
     }
 
@@ -95,13 +95,23 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
       const { order, razorpay } = createRes.data.data;
 
+      // If user opted for instant simulated payment
+      if (isInstantSimulate) {
+        await completePaymentVerification(
+          razorpay.orderId,
+          `pay_test_dummy_${Date.now()}`,
+          'TEST_SIMULATED_SIGNATURE'
+        );
+        return;
+      }
+
       // Step 2: Load Razorpay Script into Browser DOM
       const isLoaded = await loadRazorpayScript();
       
       if (!isLoaded) {
         // Fallback for offline/test mode if script load fails
         if (window.confirm('Razorpay Script Load nahi ho saka. Dynamic Test Mode Payment simulate karein?')) {
-          await completePaymentVerification(razorpay.orderId, `pay_test_dummy_${Date.now()}`, 'TEST_SIGNATURE');
+          await completePaymentVerification(razorpay.orderId, `pay_test_dummy_${Date.now()}`, 'TEST_SIMULATED_SIGNATURE');
         }
         setProcessingPayment(false);
         return;
@@ -112,7 +122,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
         key: razorpay.keyId || 'rzp_test_dummy_key',
         amount: razorpay.amount,
         currency: razorpay.currency || 'INR',
-        name: 'SaaS Store',
+        name: 'Chhabra Sports Official',
         description: `Order #${order.orderNumber}`,
         order_id: razorpay.orderId,
         handler: async function (response) {
@@ -125,10 +135,10 @@ const CheckoutModal = ({ isOpen, onClose }) => {
         prefill: {
           name: user?.username || fullName,
           email: user?.email || '',
-          contact: phone || '9999999999'
+          contact: phone || '9876543210'
         },
         theme: {
-          color: '#6366f1'
+          color: '#11362B'
         },
         modal: {
           ondismiss: function () {
@@ -139,10 +149,12 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
       const paymentWindow = new window.Razorpay(options);
       
-      // Fallback for invalid test keys in development mode
       paymentWindow.on('payment.failed', function (response) {
-        alert(`Payment Failed: ${response.error.description}`);
-        setProcessingPayment(false);
+        if (window.confirm(`Payment Gateway Notice: ${response.error.description || 'Test Mode'}. Test simulated payment proceed karein?`)) {
+          completePaymentVerification(razorpay.orderId, `pay_test_dummy_${Date.now()}`, 'TEST_SIMULATED_SIGNATURE');
+        } else {
+          setProcessingPayment(false);
+        }
       });
 
       paymentWindow.open();
@@ -164,9 +176,9 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
       if (verifyRes.data.success) {
         clearCart();
-        alert('🎉 Payment Successful! AAPKA ORDER CONGRATULATIONS SUBMIT HO GAYA HAI.');
+        alert('🎉 Payment Successful! Aapka order successfully place ho gaya hai.');
         onClose();
-        navigate('/profile');
+        navigate('/profile?tab=orders');
       } else {
         alert('Payment verification fail ho gaya.');
       }
@@ -181,65 +193,80 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="cart-overlay" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div className="auth-card" style={{ maxWidth: '620px', width: '90%', maxHeight: '90vh', overflowY: 'auto', padding: '28px' }}>
+      <div className="profile-card" style={{ maxWidth: '620px', width: '92%', maxHeight: '90vh', overflowY: 'auto', padding: '28px', background: 'var(--white)', borderRadius: 'var(--radius)' }}>
         
         {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--card-border)', paddingBottom: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <CreditCard size={24} color="var(--primary)" />
-            <h2 style={{ fontSize: '1.35rem', fontWeight: 800 }}>Complete Your Order</h2>
+            <CreditCard size={22} color="var(--gold-dark)" />
+            <h2 className="display" style={{ fontSize: '1.35rem', color: 'var(--pitch)', margin: 0 }}>
+              Complete Your Order
+            </h2>
           </div>
-          <button className="icon-btn" onClick={onClose}><X size={20} /></button>
+          <button className="icon-btn" onClick={onClose} aria-label="Close modal"><X size={20} /></button>
         </div>
 
         {/* Delivery Address Section */}
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={18} color="var(--secondary)" /> Select Shipping Address
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--pitch)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MapPin size={18} color="var(--gold-dark)" /> Select Delivery Address
             </h3>
             {!showAddAddressForm && (
-              <button className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }} onClick={() => setShowAddAddressForm(true)}>
-                <Plus size={14} /> Add New Address
+              <button
+                className="btn btn-outline"
+                style={{ padding: '6px 12px', fontSize: '10.5px', color: 'var(--pitch)', borderColor: 'var(--line)' }}
+                onClick={() => setShowAddAddressForm(true)}
+              >
+                <Plus size={14} /> Add Address
               </button>
             )}
           </div>
 
           {showAddAddressForm ? (
-            <form onSubmit={handleSaveAddress} style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', border: '1px solid var(--card-border)', marginBottom: '16px' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '12px' }}>New Shipping Address</h4>
+            <form onSubmit={handleSaveAddress} style={{ background: 'var(--parchment)', padding: '16px', borderRadius: 'var(--radius)', border: '1px solid var(--line)', marginBottom: '16px' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '12px', color: 'var(--pitch)' }}>New Shipping Address</h4>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem' }}>Full Name</label>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Full Name</label>
                   <input className="form-control" required value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Afzal Khan" />
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.8rem' }}>Phone Number</label>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Phone Number</label>
                   <input className="form-control" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="9876543210" />
                 </div>
               </div>
-              <div style={{ marginBottom: '12px' }}>
-                <label style={{ fontSize: '0.8rem' }}>Address Line</label>
-                <input className="form-control" required value={addressLine1} onChange={e => setAddressLine1(e.target.value)} placeholder="House #123, Main Market" />
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label>Address Line</label>
+                <input className="form-control" required value={addressLine1} onChange={e => setAddressLine1(e.target.value)} placeholder="House / Flat No., Road, Landmark" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                <div>
-                  <label style={{ fontSize: '0.8rem' }}>City</label>
-                  <input className="form-control" required value={city} onChange={e => setCity(e.target.value)} placeholder="Delhi" />
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>City</label>
+                  <input className="form-control" required value={city} onChange={e => setCity(e.target.value)} placeholder="Patna" />
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.8rem' }}>State</label>
-                  <input className="form-control" required value={state} onChange={e => setState(e.target.value)} placeholder="Delhi" />
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>State</label>
+                  <input className="form-control" required value={state} onChange={e => setState(e.target.value)} placeholder="Bihar" />
                 </div>
-                <div>
-                  <label style={{ fontSize: '0.8rem' }}>Pincode</label>
-                  <input className="form-control" required value={pincode} onChange={e => setPincode(e.target.value)} placeholder="110001" />
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label>Pincode</label>
+                  <input className="form-control" required value={pincode} onChange={e => setPincode(e.target.value)} placeholder="800020" />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button type="submit" className="btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>Save & Use Address</button>
+                <button type="submit" className="btn btn-gold" style={{ padding: '8px 16px', fontSize: '11px' }}>
+                  Save & Use Address
+                </button>
                 {addresses.length > 0 && (
-                  <button type="button" className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.85rem' }} onClick={() => setShowAddAddressForm(false)}>Cancel</button>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    style={{ padding: '8px 16px', fontSize: '11px', color: 'var(--ink)' }}
+                    onClick={() => setShowAddAddressForm(false)}
+                  >
+                    Cancel
+                  </button>
                 )}
               </div>
             </form>
@@ -250,10 +277,10 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                   key={addr.id}
                   onClick={() => setSelectedAddressId(addr.id)}
                   style={{
-                    padding: '14px',
-                    borderRadius: '10px',
-                    border: `2px solid ${selectedAddressId === addr.id ? 'var(--primary)' : 'var(--card-border)'}`,
-                    background: selectedAddressId === addr.id ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                    padding: '12px 14px',
+                    borderRadius: '6px',
+                    border: `1.5px solid ${selectedAddressId === addr.id ? 'var(--pitch)' : 'var(--line)'}`,
+                    background: selectedAddressId === addr.id ? 'rgba(17, 54, 43, 0.05)' : 'var(--white)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -261,12 +288,14 @@ const CheckoutModal = ({ isOpen, onClose }) => {
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{addr.fullName} ({addr.phone})</div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '2px' }}>
+                    <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--pitch)' }}>
+                      {addr.fullName} <span style={{ fontWeight: 400, color: 'var(--ink-soft)' }}>({addr.phone})</span>
+                    </div>
+                    <div style={{ color: 'var(--ink-soft)', fontSize: '0.85rem', marginTop: '2px' }}>
                       {addr.addressLine1}, {addr.city}, {addr.state} - {addr.pincode}
                     </div>
                   </div>
-                  {selectedAddressId === addr.id && <CheckCircle2 color="var(--primary)" size={20} />}
+                  {selectedAddressId === addr.id && <CheckCircle2 color="var(--pitch)" size={20} />}
                 </div>
               ))}
             </div>
@@ -274,32 +303,45 @@ const CheckoutModal = ({ isOpen, onClose }) => {
         </div>
 
         {/* Order Amount Summary */}
-        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid var(--card-border)', marginBottom: '24px' }}>
-          <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '10px' }}>Payment Summary</h4>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+        <div style={{ background: 'var(--parchment)', padding: '16px', borderRadius: 'var(--radius)', border: '1px solid var(--line)', marginBottom: '24px' }}>
+          <h4 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '10px', color: 'var(--pitch)' }}>Payment Summary</h4>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.9rem', color: 'var(--ink-soft)' }}>
             <span>Items Subtotal</span>
-            <span>₹{subtotal}</span>
+            <span style={{ fontFamily: 'Space Mono, monospace' }}>₹{subtotal.toLocaleString('en-IN')}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            <span>Shipping Charge</span>
-            <span style={{ color: 'var(--success)' }}>FREE</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.9rem', color: 'var(--ink-soft)' }}>
+            <span>Express Delivery</span>
+            <span style={{ color: 'var(--pitch)', fontWeight: 700 }}>FREE</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid var(--card-border)', fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary)' }}>
-            <span>Total Amount Payable</span>
-            <span>₹{subtotal}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid var(--line)', fontWeight: 800, fontSize: '1.15rem', color: 'var(--pitch)' }}>
+            <span>Total Payable</span>
+            <span style={{ fontFamily: 'Space Mono, monospace' }}>₹{subtotal.toLocaleString('en-IN')}</span>
           </div>
         </div>
 
-        {/* Pay Action Button */}
-        <button 
-          className="btn-primary" 
-          style={{ width: '100%', padding: '14px', fontSize: '1rem', justifyContent: 'center' }}
-          onClick={handlePayNow}
-          disabled={processingPayment || loading}
-        >
-          <ShieldCheck size={20} />
-          <span>{processingPayment ? 'Opening Razorpay Gateway...' : `Pay ₹${subtotal} via Razorpay`}</span>
-        </button>
+        {/* Payment Action Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button 
+            className="btn btn-smash" 
+            style={{ width: '100%', padding: '14px', fontSize: '12px', justifyContent: 'center' }}
+            onClick={() => handlePayNow(false)}
+            disabled={processingPayment || loading}
+          >
+            <ShieldCheck size={18} />
+            <span>{processingPayment ? 'Processing Gateway...' : `Pay ₹${subtotal.toLocaleString('en-IN')} via Razorpay`}</span>
+          </button>
+
+          <button 
+            className="btn btn-gold" 
+            style={{ width: '100%', padding: '12px', fontSize: '11px', justifyContent: 'center' }}
+            onClick={() => handlePayNow(true)}
+            disabled={processingPayment || loading}
+            title="Instant Simulated Test Order"
+          >
+            <Zap size={16} />
+            <span>⚡ Instant Checkout (Test Demo Mode)</span>
+          </button>
+        </div>
 
       </div>
     </div>

@@ -1,7 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Lock, Mail, User, ShieldCheck } from 'lucide-react';
+import { ShieldCheck, User } from 'lucide-react';
 
 const LoginPage = () => {
   const { login, register, user } = useContext(AuthContext);
@@ -15,14 +15,16 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // If already logged in, redirect based on role
-  if (user) {
-    if (user.role === 'ADMIN' || user.email === 'afzal@schooldigitalised.com') {
-      navigate('/admin/dashboard');
-    } else {
-      navigate('/profile');
+  // If already logged in, redirect based on role in useEffect
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'ADMIN' || user.email === 'afzal@schooldigitalised.com') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/profile');
+      }
     }
-  }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,10 +60,16 @@ const LoginPage = () => {
     }
   };
 
+  const fillCredentials = (userEmail, userPassword) => {
+    setEmail(userEmail);
+    setPassword(userPassword);
+    setIsLoginTab(true);
+  };
+
   return (
     <div className="wrap" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '65vh', padding: '50px 20px' }}>
       <div className="auth-card" style={{ background: 'var(--white)', border: '1px solid var(--line)', borderRadius: '12px', padding: '36px', width: '100%', maxWidth: '440px', boxShadow: 'var(--shadow-md)' }}>
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <ShieldCheck size={42} color="var(--pitch)" style={{ margin: '0 auto 12px' }} />
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--pitch)', fontFamily: 'Outfit, sans-serif' }}>
             {isLoginTab ? 'Welcome Back' : 'Create Account'}
@@ -72,7 +80,7 @@ const LoginPage = () => {
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '12px 16px', borderRadius: '10px', fontSize: '0.9rem', marginBottom: '20px' }}>
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--oxblood)', border: '1px solid var(--oxblood)', padding: '12px 16px', borderRadius: '6px', fontSize: '0.9rem', marginBottom: '20px' }}>
             {error}
           </div>
         )}
@@ -98,7 +106,7 @@ const LoginPage = () => {
                   className="form-control"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}
+                  style={{ background: 'var(--white)', color: 'var(--ink)' }}
                 >
                   <option value="CUSTOMER">🛍️ Customer / Buyer</option>
                   <option value="ADMIN">👑 Admin / Store Owner</option>
@@ -113,7 +121,7 @@ const LoginPage = () => {
               type="email"
               required
               className="form-control"
-              placeholder="john@example.com"
+              placeholder="afzal@schooldigitalised.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -136,7 +144,34 @@ const LoginPage = () => {
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.95rem', color: 'var(--ink-soft)' }}>
+        {/* Demo Fast Login Buttons */}
+        {isLoginTab && (
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
+            <span className="eyebrow" style={{ display: 'block', textAlign: 'center', marginBottom: '10px' }}>
+              Quick Demo Access
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
+                onClick={() => fillCredentials('afzal@schooldigitalised.com', 'password123')}
+              >
+                👤 Afzal (Admin)
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
+                onClick={() => fillCredentials('rahul@gmail.com', 'password123')}
+              >
+                🛍️ Rahul (Customer)
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.9rem', color: 'var(--ink-soft)' }}>
           {isLoginTab ? "Don't have an account? " : "Already have an account? "}
           <button
             style={{ background: 'none', border: 'none', color: 'var(--pitch)', fontWeight: 700, cursor: 'pointer' }}

@@ -1,14 +1,46 @@
-import React, { useContext } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useContext, useState, useRef, useEffect } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { CartContext } from '../../context/CartContext';
-import { ShoppingBag, User, LogOut, LayoutDashboard, Search, Heart } from 'lucide-react';
+import { WishlistContext } from '../../context/WishlistContext';
+import {
+  ShoppingBag,
+  User,
+  LogOut,
+  LayoutDashboard,
+  Search,
+  Heart,
+  ChevronDown,
+  Package,
+  MapPin
+} from 'lucide-react';
 
 const CustomerHeader = () => {
   const { user, logout } = useContext(AuthContext);
   const { cartCount, setIsDrawerOpen } = useContext(CartContext);
+  const { wishlistCount } = useContext(WishlistContext);
+  const navigate = useNavigate();
+
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const isAdmin = user && (user.role === 'ADMIN' || user.email === 'afzal@schooldigitalised.com');
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleNavToProfileTab = (tab) => {
+    setProfileDropdownOpen(false);
+    navigate(`/profile?tab=${tab}`);
+  };
 
   return (
     <>
@@ -30,108 +62,33 @@ const CustomerHeader = () => {
             />
           </NavLink>
 
-          {/* PRIMARY NAVIGATION */}
+          {/* PRIMARY NAVIGATION TABS (HOME, CATEGORIES, PRODUCTS, ABOUT) */}
           <nav className="primary">
             <div className="nav-item">
-              <NavLink to="/">Home</NavLink>
+              <NavLink to="/" className={({ isActive }) => (isActive ? 'active' : '')}>
+                Home
+              </NavLink>
             </div>
 
-            {/* BADMINTON MEGA MENU */}
             <div className="nav-item">
-              <NavLink to="/products?categoryId=badminton">Badminton</NavLink>
-              <div className="mega">
-                <div className="mega-col">
-                  <h4>Racquets</h4>
-                  <NavLink to="/products">Yonex Astrox / Nanoflare</NavLink>
-                  <NavLink to="/products">Li-Ning Halbertec / Tectonic</NavLink>
-                  <NavLink to="/products">Head & Apacs Racquets</NavLink>
-                  <NavLink to="/products">Light Weight & High Tension</NavLink>
-                </div>
-                <div className="mega-col">
-                  <h4>Shuttles & Strings</h4>
-                  <NavLink to="/products">Feather Shuttlecocks (RSL/Yonex)</NavLink>
-                  <NavLink to="/products">Nylon Shuttlecocks</NavLink>
-                  <NavLink to="/products">BG65 / BG80 / Aerosonic</NavLink>
-                  <a href="#stringing">Pro Stringing Service (22-30 lbs)</a>
-                </div>
-                <div className="mega-col">
-                  <h4>Court Shoes & Gear</h4>
-                  <NavLink to="/products">Non-Marking Badminton Shoes</NavLink>
-                  <NavLink to="/products">Kit Bags (3R / 6R / Duffle)</NavLink>
-                  <NavLink to="/products">Grips & Overgrips</NavLink>
-                </div>
-                <div className="mega-feature">
-                  <img src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=400&q=80&auto=format&fit=crop" alt="Badminton Equipment" />
-                  <div className="mf-label">Yonex & Li-Ning</div>
-                  <span className="mf-cta">Explore Racquets →</span>
-                </div>
-              </div>
+              <NavLink to="/categories" className={({ isActive }) => (isActive ? 'active' : '')}>
+                Categories
+              </NavLink>
             </div>
 
-            {/* TENNIS MEGA MENU */}
             <div className="nav-item">
-              <NavLink to="/products?categoryId=tennis">Tennis</NavLink>
-              <div className="mega">
-                <div className="mega-col">
-                  <h4>Tennis Racquets</h4>
-                  <NavLink to="/products">Head Speed / Radical</NavLink>
-                  <NavLink to="/products">Babolat Pure Drive / Aero</NavLink>
-                  <NavLink to="/products">Wilson Pro Staff / Blade</NavLink>
-                  <NavLink to="/products">Yonex EZONE / VCORE</NavLink>
-                </div>
-                <div className="mega-col">
-                  <h4>Balls & Strings</h4>
-                  <NavLink to="/products">Championship Tennis Balls</NavLink>
-                  <NavLink to="/products">Luxilon & Solinco Strings</NavLink>
-                  <NavLink to="/products">Vibration Dampeners</NavLink>
-                </div>
-                <div className="mega-col">
-                  <h4>Bags & Shoes</h4>
-                  <NavLink to="/products">All-Court Tennis Shoes</NavLink>
-                  <NavLink to="/products">9R & 12R Tour Kitbags</NavLink>
-                  <NavLink to="/products">Replacement Grips</NavLink>
-                </div>
-                <div className="mega-feature">
-                  <img src="https://images.unsplash.com/photo-1595435742656-5272d0b3fa82?w=400&q=80&auto=format&fit=crop" alt="Tennis Gear" />
-                  <div className="mf-label">Head & Babolat</div>
-                  <span className="mf-cta">Shop Tennis Range →</span>
-                </div>
-              </div>
+              <NavLink to="/products" className={({ isActive }) => (isActive ? 'active' : '')}>
+                Products
+              </NavLink>
             </div>
 
-            {/* CRICKET MEGA MENU */}
             <div className="nav-item">
-              <NavLink to="/products?categoryId=cricket">Cricket</NavLink>
-              <div className="mega">
-                <div className="mega-col">
-                  <h4>Bats & Balls</h4>
-                  <NavLink to="/products">English Willow Bats (SS/SG/MRF)</NavLink>
-                  <NavLink to="/products">Kashmir Willow Bats</NavLink>
-                  <NavLink to="/products">Leather Match Balls</NavLink>
-                </div>
-                <div className="mega-col">
-                  <h4>Protection</h4>
-                  <NavLink to="/products">Batting & Keeping Gloves</NavLink>
-                  <NavLink to="/products">Legguards & Pads</NavLink>
-                  <NavLink to="/products">Helmets & Guards</NavLink>
-                </div>
-                <div className="mega-col">
-                  <h4>Kitbags & Shoes</h4>
-                  <NavLink to="/products">Cricket Spike Shoes</NavLink>
-                  <NavLink to="/products">Wheelie Kit Bags</NavLink>
-                </div>
-                <div className="mega-feature">
-                  <img src="https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=400&q=80&auto=format&fit=crop" alt="Cricket Bats" />
-                  <div className="mf-label">SS & SG Ton</div>
-                  <span className="mf-cta">Shop English Willow →</span>
-                </div>
-              </div>
+              <NavLink to="/about" className={({ isActive }) => (isActive ? 'active' : '')}>
+                About
+              </NavLink>
             </div>
 
-            <div className="nav-item"><NavLink to="/products">Shoes</NavLink></div>
-            <div className="nav-item"><NavLink to="/products">Fitness</NavLink></div>
-
-            {/* 👑 ADMIN CONSOLE LINK */}
+            {/* 👑 ADMIN CONSOLE LINK (Shown only for Admin users) */}
             {isAdmin && (
               <div className="nav-item">
                 <NavLink to="/admin/dashboard" style={{ color: 'var(--gold)', fontWeight: 800 }}>
@@ -144,31 +101,187 @@ const CustomerHeader = () => {
 
           {/* HEADER ACTIONS */}
           <div className="header-actions">
+            {/* Search */}
             <button className="icon-btn" aria-label="Search" onClick={() => navigate('/products')}>
               <Search size={20} />
             </button>
 
-            <button className="icon-btn" aria-label="Wishlist" onClick={() => navigate('/profile')}>
+            {/* Wishlist Heart Icon with Count Badge */}
+            <button
+              className="icon-btn"
+              aria-label="Wishlist"
+              onClick={() => {
+                if (user) {
+                  navigate('/profile?tab=wishlist');
+                } else {
+                  navigate('/login');
+                }
+              }}
+              title="View Wishlist"
+            >
               <Heart size={20} />
-              <span className="badge">0</span>
+              {wishlistCount > 0 && <span className="badge">{wishlistCount}</span>}
             </button>
 
-            <button className="cart-chip" onClick={() => setIsDrawerOpen(true)}>
+            {/* Cart Chip */}
+            <button className="cart-chip" onClick={() => setIsDrawerOpen(true)} title="View Cart">
               <ShoppingBag size={16} />
               <span>CART</span> ({cartCount})
             </button>
 
+            {/* USER LOGIN / PROFILE AREA */}
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '6px' }}>
-                <NavLink to="/profile" style={{ textDecoration: 'none', color: 'var(--ink)', fontWeight: 700, fontSize: '0.85rem' }}>
-                  Hi, {user.username}
-                </NavLink>
-                <button className="icon-btn" onClick={logout} title="Logout" style={{ width: '36px', height: '36px' }}>
-                  <LogOut size={16} />
+              <div ref={dropdownRef} style={{ position: 'relative', marginLeft: '6px' }}>
+                <button
+                  className="btn btn-gold"
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    textTransform: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                  onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                >
+                  <User size={15} />
+                  <span style={{ fontWeight: 800, maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user.username || 'User'}
+                  </span>
+                  <ChevronDown size={14} style={{ transform: profileDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                 </button>
+
+                {/* Profile Interactive Dropdown Menu */}
+                {profileDropdownOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 'calc(100% + 8px)',
+                      width: '230px',
+                      background: 'var(--white)',
+                      border: '1px solid var(--line)',
+                      borderRadius: 'var(--radius)',
+                      boxShadow: 'var(--shadow-lg)',
+                      zIndex: 1000,
+                      padding: '12px 0',
+                      animation: 'fadeIn 0.2s ease'
+                    }}
+                  >
+                    <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--line-dark)', marginBottom: '6px' }}>
+                      <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--pitch)', margin: 0 }}>
+                        {user.username}
+                      </p>
+                      <p style={{ fontSize: '11px', color: 'var(--ink-soft)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {user.email}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => handleNavToProfileTab('orders')}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '10px 16px',
+                        background: 'none',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--parchment-dim)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                    >
+                      <Package size={16} color="var(--pitch)" />
+                      <span>My Orders</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleNavToProfileTab('addresses')}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '10px 16px',
+                        background: 'none',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--parchment-dim)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                    >
+                      <MapPin size={16} color="var(--gold-dark)" />
+                      <span>Saved Addresses</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleNavToProfileTab('wishlist')}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '10px 16px',
+                        background: 'none',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--parchment-dim)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                    >
+                      <Heart size={16} color="var(--oxblood)" />
+                      <span>My Wishlist ({wishlistCount})</span>
+                    </button>
+
+                    <div style={{ height: '1px', background: 'var(--line-dark)', margin: '6px 0' }}></div>
+
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        logout();
+                      }}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '10px 16px',
+                        background: 'none',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: 'var(--oxblood)',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#fef2f2')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                    >
+                      <LogOut size={16} />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <NavLink to="/login" className="btn btn-gold" style={{ padding: '8px 14px', fontSize: '11px', marginLeft: '6px' }}>
+              <NavLink to="/login" className="btn btn-gold" style={{ padding: '8px 16px', fontSize: '11px', marginLeft: '6px' }}>
                 <User size={14} />
                 <span>Login</span>
               </NavLink>

@@ -2,220 +2,111 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api/axios';
 import { CartContext } from '../../context/CartContext';
-import { Heart } from 'lucide-react';
+import { WishlistContext } from '../../context/WishlistContext';
+import { Heart, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
 
-const productsData = [
+const fallbackCategories = [
   {
-    id: 'p1',
-    category: 'badminton',
-    brand: 'Yonex',
-    name: 'Astrox 88D Pro Badminton Racquet',
-    price: 14999,
-    oldPrice: 17999,
-    rating: 4.9,
-    reviews: 214,
-    tag: 'BESTSELLER',
-    specs: '4U / G5 · Head Heavy · Stiff Shaft · Pre-String Option',
-    img: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500&q=80&auto=format&fit=crop',
-    img2: 'https://images.unsplash.com/photo-1595435742656-5272d0b3fa82?w=500&q=80&auto=format&fit=crop'
-  },
-  {
-    id: 'p2',
-    category: 'tennis',
-    brand: 'Head',
-    name: 'Head Speed MP 2024 Tennis Racquet',
-    price: 18999,
-    oldPrice: 22499,
-    rating: 4.9,
-    reviews: 189,
-    tag: 'PRO CHOICE',
-    specs: '300g · 100 sq.in · Auxetic 2.0 Tech · Unstrung Frame',
-    img: 'https://images.unsplash.com/photo-1595435742656-5272d0b3fa82?w=500&q=80&auto=format&fit=crop',
-    img2: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500&q=80&auto=format&fit=crop'
-  },
-  {
-    id: 'p3',
-    category: 'cricket',
-    brand: 'SS',
-    name: 'Ton Reserve Edition English Willow Bat',
-    price: 12499,
-    oldPrice: 15999,
-    rating: 5.0,
-    reviews: 312,
-    tag: 'BESTSELLER',
-    specs: 'Grade 1 Willow · Weight 1180g · Hand Oiled & Knocked',
-    img: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=500&q=80&auto=format&fit=crop',
-    img2: 'https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=500&q=80&auto=format&fit=crop'
-  },
-  {
-    id: 'p4',
-    category: 'badminton',
-    brand: 'Li-Ning',
-    name: 'Halbertec 7000 Badminton Racquet',
-    price: 13599,
-    oldPrice: 22990,
-    rating: 4.8,
-    reviews: 96,
-    tag: 'NEW',
-    specs: '3U / G5 · Even Balance · High Elasticity Carbon Shaft',
-    img: 'https://images.unsplash.com/photo-1595435742656-5272d0b3fa82?w=500&q=80&auto=format&fit=crop',
-    img2: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500&q=80&auto=format&fit=crop'
-  },
-  {
-    id: 'p5',
-    category: 'shoes',
-    brand: 'Asics',
-    name: 'Gel-Rocket 11 Non-Marking Indoor Shoes',
-    price: 5499,
-    oldPrice: 6999,
-    rating: 4.8,
-    reviews: 145,
-    tag: 'BESTSELLER',
-    specs: 'Gel Cushioning · Trusstic Tech · Non-Marking Gum Sole',
-    img: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80&auto=format&fit=crop',
-    img2: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&q=80&auto=format&fit=crop'
-  },
-  {
-    id: 'p6',
-    category: 'tennis',
-    brand: 'Babolat',
-    name: 'Pure Drive 2024 Tennis Racquet',
-    price: 19499,
-    oldPrice: 23999,
-    rating: 4.9,
-    reviews: 167,
-    tag: 'POPULAR',
-    specs: '300g · FSI Power Tech · High Power & Explosive Feel',
-    img: 'https://images.unsplash.com/photo-1595435742656-5272d0b3fa82?w=500&q=80&auto=format&fit=crop',
-    img2: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500&q=80&auto=format&fit=crop'
-  },
-  {
-    id: 'p7',
-    category: 'football',
-    brand: 'Adidas',
-    name: 'Predator Elite FG Football Boots',
-    price: 8999,
-    oldPrice: 11499,
-    rating: 4.7,
-    reviews: 342,
-    tag: 'SALE',
-    specs: 'Controlframe 2.0 · Moulded Studs · HybridTouch Upper',
-    img: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=500&q=80&auto=format&fit=crop',
-    img2: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500&q=80&auto=format&fit=crop'
-  },
-  {
-    id: 'p8',
-    category: 'badminton',
-    brand: 'RSL',
-    name: 'Tourney No.1 Feather Shuttlecocks (12 Pack)',
-    price: 999,
-    oldPrice: 1299,
-    rating: 4.9,
-    reviews: 410,
-    tag: 'BESTSELLER',
-    specs: 'Grade A Goose Feather · Speed 77 · Tournament Class',
-    img: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500&q=80&auto=format&fit=crop',
-    img2: 'https://images.unsplash.com/photo-1595435742656-5272d0b3fa82?w=500&q=80&auto=format&fit=crop'
-  },
-  {
-    id: 'p9',
-    category: 'cricket',
-    brand: 'SG',
-    name: 'Test Players Wicket Keeping Gloves',
-    price: 3299,
-    oldPrice: 3999,
-    rating: 4.6,
-    reviews: 84,
-    tag: null,
-    specs: 'Premium Leather · Rubberized Palm Grip · Brass Thimbles',
-    img: 'https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=500&q=80&auto=format&fit=crop',
-    img2: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=500&q=80&auto=format&fit=crop'
-  },
-  {
-    id: 'p10',
-    category: 'fitness',
-    brand: 'Cosco',
-    name: 'Adjustable Rubber Dumbbell Set 20kg Kit',
-    price: 4499,
-    oldPrice: 5999,
-    rating: 4.7,
-    reviews: 78,
-    tag: null,
-    specs: 'Chrome Bar + Collars · Heavy Duty Rubber Coated Plates',
-    img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&q=80&auto=format&fit=crop',
-    img2: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80&auto=format&fit=crop'
-  }
-];
-
-const categoriesList = [
-  {
-    id: 'badminton',
+    id: 1,
     name: 'Badminton & Racquets',
-    img: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500&q=80&auto=format&fit=crop'
+    imageUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500&q=80&auto=format&fit=crop'
   },
   {
-    id: 'tennis',
+    id: 2,
     name: 'Tennis Racquets & Gear',
-    img: 'https://images.unsplash.com/photo-1595435742656-5272d0b3fa82?w=500&q=80&auto=format&fit=crop'
+    imageUrl: 'https://images.unsplash.com/photo-1595435742656-5272d0b3fa82?w=500&q=80&auto=format&fit=crop'
   },
   {
-    id: 'cricket',
+    id: 3,
     name: 'Cricket Bats & Gear',
-    img: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=500&q=80&auto=format&fit=crop'
+    imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=500&q=80&auto=format&fit=crop'
   },
   {
-    id: 'shoes',
+    id: 4,
     name: 'Non-Marking Court Shoes',
-    img: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80&auto=format&fit=crop'
+    imageUrl: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80&auto=format&fit=crop'
   },
   {
-    id: 'football',
+    id: 5,
     name: 'Football & Boots',
-    img: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=500&q=80&auto=format&fit=crop'
+    imageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=500&q=80&auto=format&fit=crop'
   },
   {
-    id: 'fitness',
+    id: 6,
     name: 'Gym & Fitness Gear',
-    img: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&q=80&auto=format&fit=crop'
+    imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&q=80&auto=format&fit=crop'
   },
   {
-    id: 'apparel',
-    name: 'Dri-FIT Apparel',
-    img: 'https://images.unsplash.com/photo-1571945153237-4929e783af4a?w=500&q=80&auto=format&fit=crop'
-  },
-  {
-    id: 'all',
-    name: 'Strings, Grips & Accessories',
-    img: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500&q=80&auto=format&fit=crop'
+    id: 7,
+    name: 'Strings & Accessories',
+    imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500&q=80&auto=format&fit=crop'
   }
 ];
 
 const HomePage = () => {
   const { addToCart } = useContext(CartContext);
+  const { isInWishlist, toggleWishlist } = useContext(WishlistContext);
   const navigate = useNavigate();
 
-  const [currentFilter, setCurrentFilter] = useState('all');
-  const [wishlist, setWishlist] = useState(new Set());
+  const [categories, setCategories] = useState(fallbackCategories);
+  const [products, setProducts] = useState([]);
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1 });
+  const [page, setPage] = useState(1);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const filteredProducts = currentFilter === 'all'
-    ? productsData
-    : productsData.filter(p => p.category === currentFilter);
+  // Fetch Categories from Backend API
+  useEffect(() => {
+    API.get('/categories')
+      .then((res) => {
+        if (res.data.success && res.data.data?.length > 0) {
+          setCategories(res.data.data);
+        }
+      })
+      .catch((err) => console.log('Using fallback categories', err));
+  }, []);
 
-  const toggleWishlist = (id) => {
-    setWishlist(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
+  // Fetch Products with Pagination from Backend API
+  useEffect(() => {
+    const fetchHomeProducts = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          page,
+          limit: 8,
+          sortBy: 'createdAt',
+          sortOrder: 'desc'
+        });
+        if (selectedCategoryId) {
+          params.append('categoryId', selectedCategoryId);
+        }
+
+        const res = await API.get(`/products?${params.toString()}`);
+        if (res.data.success) {
+          setProducts(res.data.data || []);
+          if (res.data.pagination) {
+            setPagination(res.data.pagination);
+          }
+        }
+      } catch (err) {
+        console.error('Home products fetch error:', err);
+      } finally {
+        setLoading(false);
       }
-      return next;
-    });
-  };
+    };
+
+    fetchHomeProducts();
+  }, [page, selectedCategoryId]);
 
   const scrollToSection = (id) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleCategoryClick = (catId) => {
+    setSelectedCategoryId(catId);
+    setPage(1);
+    scrollToSection('products-section');
   };
 
   return (
@@ -229,15 +120,22 @@ const HomePage = () => {
             Authentic Yonex, Head, Babolat & Li-Ning racquets, SS English Willow cricket bats, tournament shoes and certified stringing — trusted by athletes across India since 1998.
           </p>
           <div className="hero-ctas">
-            <a href="#products" className="btn btn-gold" onClick={(e) => { e.preventDefault(); scrollToSection('products'); }}>
+            <a
+              href="#products-section"
+              className="btn btn-gold"
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToSection('products-section');
+              }}
+            >
               Shop Catalog
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12 5 19 12 12 19" />
               </svg>
             </a>
-            <button className="btn btn-outline" onClick={() => scrollToSection('products')}>
-              ⚡ Launch Racquet Finder
+            <button className="btn btn-outline" onClick={() => scrollToSection('categories-section')}>
+              ⚡ Browse Categories
             </button>
           </div>
         </div>
@@ -250,7 +148,7 @@ const HomePage = () => {
             alt="Athlete in action"
           />
 
-          <div className="racquet-finder-badge" onClick={() => scrollToSection('products')}>
+          <div className="racquet-finder-badge" onClick={() => scrollToSection('products-section')}>
             <svg viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10" />
               <polygon points="12 8 8 16 16 16" />
@@ -328,46 +226,224 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* 4. SHOP BY CATEGORY */}
-      <section className="section" id="categories">
+      {/* 4. SHOP BY CATEGORY (PLACED DIRECTLY ABOVE PRODUCTS AS REQUESTED) */}
+      <section className="section" id="categories-section">
         <div className="wrap">
           <div className="sec-head">
             <div>
-              <span className="eyebrow">Shop by Sport & Category</span>
-              <h2>Explore Sports Categories</h2>
+              <span className="eyebrow">Explore Sports Disciplines</span>
+              <h2>Shop by Sport & Category</h2>
             </div>
-            <a href="#products" className="sec-link" onClick={(e) => { e.preventDefault(); setCurrentFilter('all'); scrollToSection('products'); }}>
-              View Complete Catalog →
-            </a>
+            <button
+              className="sec-link"
+              onClick={() => navigate('/categories')}
+            >
+              View All Categories ({categories.length}) →
+            </button>
           </div>
 
           <div className="cat-grid">
-            {categoriesList.map((cat) => (
-              <div 
-                key={cat.id} 
-                className="cat-card"
-                onClick={() => { setCurrentFilter(cat.id); scrollToSection('products'); }}
-              >
-                <img src={cat.img} alt={cat.name} />
-                <div className="cat-overlay">
-                  <div className="cat-label">
-                    <span>{cat.name}</span>
-                    <div className="arrow">
-                      <svg viewBox="0 0 24 24">
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                        <polyline points="12 5 19 12 12 19" />
-                      </svg>
+            {categories.slice(0, 8).map((cat) => {
+              const imageSrc = cat.imageUrl
+                ? (cat.imageUrl.startsWith('http') ? cat.imageUrl : `http://localhost:5000${cat.imageUrl}`)
+                : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500';
+
+              return (
+                <div 
+                  key={cat.id} 
+                  className="cat-card"
+                  onClick={() => handleCategoryClick(cat.id)}
+                >
+                  <img src={imageSrc} alt={cat.name} />
+                  <div className="cat-overlay">
+                    <div className="cat-label">
+                      <span>{cat.name}</span>
+                      <div className="arrow">
+                        <svg viewBox="0 0 24 24">
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                          <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* 5. EDITORIAL COLLECTIONS */}
-      <section className="section tight" id="collections" style={{ background: 'var(--parchment-dim)' }}>
+      {/* 5. PRODUCTS SECTION WITH PAGINATION (PLACED DIRECTLY BELOW CATEGORIES) */}
+      <section className="section" id="products-section" style={{ background: 'var(--parchment-dim)' }}>
+        <div className="wrap">
+          <div className="sec-head">
+            <div>
+              <span className="eyebrow">Online Store Catalog</span>
+              <h2>Featured Racquets & Sports Gear</h2>
+            </div>
+            <div className="sec-link" style={{ cursor: 'pointer' }} onClick={() => navigate('/products')}>
+              Open Full Products Catalog →
+            </div>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="filter-pills">
+            <button
+              className={`pill-btn ${selectedCategoryId === null ? 'active' : ''}`}
+              onClick={() => {
+                setSelectedCategoryId(null);
+                setPage(1);
+              }}
+            >
+              All Sports
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                className={`pill-btn ${selectedCategoryId === cat.id ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedCategoryId(cat.id);
+                  setPage(1);
+                }}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Products Grid */}
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '60px', color: 'var(--ink-soft)' }}>
+              Loading products...
+            </div>
+          ) : products.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px', background: 'var(--white)', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <p style={{ color: 'var(--ink-soft)', fontSize: '1.1rem' }}>No products found in this category.</p>
+              <button
+                className="btn btn-gold"
+                style={{ marginTop: '16px' }}
+                onClick={() => setSelectedCategoryId(null)}
+              >
+                View All Products
+              </button>
+            </div>
+          ) : (
+            <div className="prod-grid">
+              {products.map((p) => {
+                const imageSrc = p.imageUrl
+                  ? (p.imageUrl.startsWith('http') ? p.imageUrl : `http://localhost:5000${p.imageUrl}`)
+                  : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500';
+
+                const isOutOfStock = p.stock <= 0;
+                const wishlisted = isInWishlist(p.id);
+
+                return (
+                  <div key={p.id} className="prod-card">
+                    <div className="prod-media">
+                      {p.tag && <div className={`prod-tag ${p.tag.toLowerCase()}`}>{p.tag}</div>}
+                      
+                      {/* Wishlist Button */}
+                      <button 
+                        className={`prod-wish ${wishlisted ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleWishlist(p);
+                        }}
+                        aria-label="Toggle wishlist"
+                        title={wishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                      >
+                        <Heart size={16} fill={wishlisted ? 'var(--oxblood)' : 'none'} color={wishlisted ? 'var(--oxblood)' : 'var(--ink)'} />
+                      </button>
+
+                      <img className="primary" src={imageSrc} alt={p.name} />
+                      
+                      <button
+                        className="quick-add-btn"
+                        disabled={isOutOfStock}
+                        onClick={() => addToCart(p.id, 1)}
+                      >
+                        {isOutOfStock ? 'Out of Stock' : '+ Add to Cart'}
+                      </button>
+                    </div>
+
+                    <div className="prod-info">
+                      <div>
+                        <div className="prod-brand">{p.brand?.name || p.brandName || p.category?.name || 'Chhabra Sports'}</div>
+                        <div className="prod-name" title={p.name}>{p.name}</div>
+                        {p.description && (
+                          <span className="spec-chip">
+                            {p.description.substring(0, 60)}...
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ marginTop: '12px' }}>
+                        <div className="prod-price">
+                          <span className="price-now">₹{p.price?.toLocaleString('en-IN')}</span>
+                        </div>
+                        <button
+                          className="btn btn-gold"
+                          style={{ width: '100%', marginTop: '10px', justifyContent: 'center', padding: '8px 12px', fontSize: '11px' }}
+                          disabled={isOutOfStock}
+                          onClick={() => addToCart(p.id, 1)}
+                        >
+                          <ShoppingCart size={14} />
+                          <span>{isOutOfStock ? 'Out of Stock' : 'Add to Cart'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* REAL PAGINATION CONTROLS */}
+          {pagination && pagination.totalPages > 1 && (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '16px',
+                marginTop: '44px'
+              }}
+            >
+              <button
+                className="btn btn-outline"
+                style={{ color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--white)' }}
+                disabled={page <= 1}
+                onClick={() => {
+                  setPage(page - 1);
+                  scrollToSection('products-section');
+                }}
+              >
+                <ChevronLeft size={16} />
+                <span>Prev</span>
+              </button>
+
+              <span style={{ fontWeight: 700, fontFamily: 'Space Mono, monospace', fontSize: '13px', color: 'var(--pitch)' }}>
+                Page {pagination.currentPage || page} of {pagination.totalPages}
+              </span>
+
+              <button
+                className="btn btn-outline"
+                style={{ color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--white)' }}
+                disabled={page >= pagination.totalPages}
+                onClick={() => {
+                  setPage(page + 1);
+                  scrollToSection('products-section');
+                }}
+              >
+                <span>Next</span>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 6. EDITORIAL COLLECTIONS */}
+      <section className="section tight" id="collections">
         <div className="wrap">
           <div className="sec-head">
             <div>
@@ -381,7 +457,10 @@ const HomePage = () => {
               <div className="ed-content">
                 <span className="eyebrow">01 · Match Ready</span>
                 <h3>English Willow Pro Series</h3>
-                <button className="btn btn-outline" onClick={() => { setCurrentFilter('cricket'); scrollToSection('products'); }}>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => navigate('/products?categoryId=3')}
+                >
                   Explore Cricket Bats →
                 </button>
               </div>
@@ -402,77 +481,6 @@ const HomePage = () => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. PRODUCTS SECTION WITH FILTER TABS */}
-      <section className="section" id="products">
-        <div className="wrap">
-          <div className="sec-head">
-            <div>
-              <span className="eyebrow">Browse Online Store</span>
-              <h2>Featured Racquets & Sports Gear</h2>
-            </div>
-            <div className="sec-link" style={{ cursor: 'default' }}>
-              Showing {filteredProducts.length} products
-            </div>
-          </div>
-
-          {/* Filter Pills */}
-          <div className="filter-pills">
-            <button className={`pill-btn ${currentFilter === 'all' ? 'active' : ''}`} onClick={() => setCurrentFilter('all')}>All Products</button>
-            <button className={`pill-btn ${currentFilter === 'badminton' ? 'active' : ''}`} onClick={() => setCurrentFilter('badminton')}>Badminton</button>
-            <button className={`pill-btn ${currentFilter === 'tennis' ? 'active' : ''}`} onClick={() => setCurrentFilter('tennis')}>Tennis</button>
-            <button className={`pill-btn ${currentFilter === 'cricket' ? 'active' : ''}`} onClick={() => setCurrentFilter('cricket')}>Cricket</button>
-            <button className={`pill-btn ${currentFilter === 'shoes' ? 'active' : ''}`} onClick={() => setCurrentFilter('shoes')}>Shoes & Spikes</button>
-            <button className={`pill-btn ${currentFilter === 'football' ? 'active' : ''}`} onClick={() => setCurrentFilter('football')}>Football</button>
-            <button className={`pill-btn ${currentFilter === 'fitness' ? 'active' : ''}`} onClick={() => setCurrentFilter('fitness')}>Fitness</button>
-          </div>
-
-          {/* Products Grid */}
-          <div className="prod-grid">
-            {filteredProducts.map((p) => (
-              <div key={p.id} className="prod-card">
-                <div className="prod-media">
-                  {p.tag && <div className={`prod-tag ${p.tag.toLowerCase()}`}>{p.tag}</div>}
-                  <button 
-                    className={`prod-wish ${wishlist.has(p.id) ? 'active' : ''}`}
-                    onClick={() => toggleWishlist(p.id)}
-                    aria-label="Add to wishlist"
-                  >
-                    <svg viewBox="0 0 24 24">
-                      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
-                    </svg>
-                  </button>
-                  <img className="primary" src={p.img} alt={p.name} />
-                  <img className="secondary" src={p.img2} alt={p.name} />
-                  <button className="quick-add-btn" onClick={() => addToCart(1, 1)}>+ Add to Cart</button>
-                </div>
-                <div className="prod-info">
-                  <div>
-                    <div className="prod-brand">{p.brand}</div>
-                    <div className="prod-name">{p.name}</div>
-                    <span className="spec-chip">{p.specs}</span>
-                  </div>
-                  <div style={{ marginTop: '12px' }}>
-                    <div className="prod-rating">
-                      <span className="stars">★★★★★</span>
-                      <span className="rev-count">({p.reviews})</span>
-                    </div>
-                    <div className="prod-price">
-                      <span className="price-now">₹{p.price.toLocaleString('en-IN')}</span>
-                      {p.oldPrice && (
-                        <>
-                          <span className="price-old">₹{p.oldPrice.toLocaleString('en-IN')}</span>
-                          <span className="price-off">-{Math.round((1 - p.price / p.oldPrice) * 100)}%</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -542,18 +550,18 @@ const HomePage = () => {
             </div>
           </div>
           <div className="brand-strip">
-            <div className="brand-cell" onClick={() => { setCurrentFilter('badminton'); scrollToSection('products'); }}>Yonex</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('tennis'); scrollToSection('products'); }}>Head</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('tennis'); scrollToSection('products'); }}>Babolat</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('tennis'); scrollToSection('products'); }}>Wilson</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('badminton'); scrollToSection('products'); }}>Li-Ning</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('cricket'); scrollToSection('products'); }}>SS</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('cricket'); scrollToSection('products'); }}>SG</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('shoes'); scrollToSection('products'); }}>Adidas</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('shoes'); scrollToSection('products'); }}>Puma</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('football'); scrollToSection('products'); }}>Nivia</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('fitness'); scrollToSection('products'); }}>Cosco</div>
-            <div className="brand-cell" onClick={() => { setCurrentFilter('shoes'); scrollToSection('products'); }}>Asics</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>Yonex</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>Head</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>Babolat</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>Wilson</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>Li-Ning</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>SS</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>SG</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>Adidas</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>Puma</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>Nivia</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>Cosco</div>
+            <div className="brand-cell" onClick={() => navigate('/products')}>Asics</div>
           </div>
         </div>
       </section>
@@ -565,7 +573,7 @@ const HomePage = () => {
           <span className="eyebrow" style={{ color: 'var(--gold-light)' }}>Gear Up for Victory</span>
           <h2>Equip Your Game.</h2>
           <p>Premium multi-sport equipment engineered for players, clubs, and sports academies — built for performance that lasts season after season.</p>
-          <button className="btn btn-gold" onClick={() => scrollToSection('products')}>
+          <button className="btn btn-gold" onClick={() => navigate('/products')}>
             Browse All Products
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="5" y1="12" x2="19" y2="12" />
