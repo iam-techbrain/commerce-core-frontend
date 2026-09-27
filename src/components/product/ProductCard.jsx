@@ -66,9 +66,33 @@ const ProductCard = ({ product }) => {
           )}
         </div>
         <div style={{ marginTop: '14px' }}>
-          <div className="prod-price">
+          <div className="prod-price" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span className="price-now">₹{product.price?.toLocaleString('en-IN')}</span>
+            {product.mrp && product.mrp > product.price && (
+              <>
+                <span style={{ fontSize: '0.82rem', textDecoration: 'line-through', color: 'var(--ink-soft)' }}>
+                  ₹{product.mrp?.toLocaleString('en-IN')}
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: 'var(--pitch)',
+                    background: 'var(--gold)',
+                    padding: '2px 6px',
+                    borderRadius: '4px'
+                  }}
+                >
+                  -{Math.round(((product.mrp - product.price) / product.mrp) * 100)}%
+                </span>
+              </>
+            )}
           </div>
+          {product.hasVariants && product.variants?.length > 0 && (
+            <div style={{ fontSize: '0.72rem', color: 'var(--gold)', marginTop: '4px', fontWeight: 600 }}>
+              ⚡ {product.variants.length} Options Available
+            </div>
+          )}
           <button
             className="btn btn-gold"
             style={{ width: '100%', marginTop: '12px', justifyContent: 'center', padding: '10px', fontSize: '11px' }}
