@@ -2,30 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import API from '../api/axios';
 import ProductCard from '../components/product/ProductCard';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 
 const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryIdParam = searchParams.get('categoryId');
+  const subCategoryIdParam = searchParams.get('subCategoryId');
 
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState(null);
+
   const [selectedCategoryId, setSelectedCategoryId] = useState(categoryIdParam ? parseInt(categoryIdParam) : null);
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState(subCategoryIdParam ? parseInt(subCategoryIdParam) : null);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  // Sync state if URL query param changes
+  // Sync state if URL query params change
   useEffect(() => {
     if (categoryIdParam) {
       setSelectedCategoryId(parseInt(categoryIdParam));
     } else {
       setSelectedCategoryId(null);
     }
-  }, [categoryIdParam]);
+
+    if (subCategoryIdParam) {
+      setSelectedSubCategoryId(parseInt(subCategoryIdParam));
+    } else {
+      setSelectedSubCategoryId(null);
+    }
+  }, [categoryIdParam, subCategoryIdParam]);
 
   // Fetch Categories for Filter Pills
   useEffect(() => {
@@ -35,6 +45,16 @@ const ProductsPage = () => {
       })
       .catch((err) => console.error(err));
   }, []);
+
+  // Fetch Subcategories (filtered by category if selected)
+  useEffect(() => {
+    const url = selectedCategoryId ? `/subcategories?categoryId=${selectedCategoryId}` : '/subcategories';
+    API.get(url)
+      .then((res) => {
+        if (res.data.success) setSubcategories(res.data.data);
+      })
+      .catch((err) => console.error(err));
+  }, [selectedCategoryId]);
 
   // Fetch Paginated Products
   const fetchProducts = async () => {
@@ -46,7 +66,13 @@ const ProductsPage = () => {
         sortBy,
         sortOrder
       });
-      if (selectedCategoryId) params.append('categoryId', selectedCategoryId);
+
+      if (selectedSubCategoryId) {
+        params.append('subCategoryId', selectedSubCategoryId);
+      } else if (selectedCategoryId) {
+        params.append('categoryId', selectedCategoryId);
+      }
+
       if (search) params.append('search', search);
 
       const res = await API.get(`/products?${params.toString()}`);
@@ -63,16 +89,26 @@ const ProductsPage = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, [page, selectedCategoryId, search, sortBy, sortOrder]);
+  }, [page, selectedCategoryId, selectedSubCategoryId, search, sortBy, sortOrder]);
 
   const handleCategorySelect = (catId) => {
     setSelectedCategoryId(catId);
+    setSelectedSubCategoryId(null); // Reset subcategory filter when switching main category
     setPage(1);
     if (catId) {
       setSearchParams({ categoryId: catId });
     } else {
       setSearchParams({});
     }
+  };
+
+  const handleSubCategorySelect = (subId) => {
+    setSelectedSubCategoryId(subId);
+    setPage(1);
+    const newParams = {};
+    if (selectedCategoryId) newParams.categoryId = selectedCategoryId;
+    if (subId) newParams.subCategoryId = subId;
+    setSearchParams(newParams);
   };
 
   return (
@@ -117,11 +153,14 @@ const ProductsPage = () => {
         </div>
       </div>
 
-      {/* Category Filter Pills */}
-      <div className="filter-pills">
+      {/* Main Category Filter Pills */}
+      <div className="filter-pills" style={{ marginBottom: '12px' }}>
         <button
-          className={`pill-btn ${selectedCategoryId === null ? 'active' : ''}`}
-          onClick={() => handleCategorySelect(null)}
+          className={`pill-btn ${selectedCategoryId === null && selectedSubCategoryId === null ? 'active' : ''}`}
+          onClick={() => {
+            setSelectedSubCategoryId(null);
+            handleCategorySelect(null);
+          }}
         >
           All Products
         </button>
@@ -136,12 +175,69 @@ const ProductsPage = () => {
         ))}
       </div>
 
+      {/* SubCategory Filter Pills (When Main Category or SubCategory is Active) */}
+      {subcategories.length > 0 && (
+        <div 
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            flexWrap: 'wrap',
+            background: 'var(--parchment)',
+            padding: '12px 18px',
+            borderRadius: '12px',
+            border: '1px solid var(--line-dark)',
+            marginBottom: '32px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, color: 'var(--pitch)', marginRight: '8px' }}>
+            <Filter size={14} />
+            <span>SUBCATEGORIES:</span>
+          </div>
+
+          <button
+            style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              border: selectedSubCategoryId === null ? '1px solid var(--pitch)' : '1px solid var(--line-dark)',
+              background: selectedSubCategoryId === null ? 'var(--pitch)' : 'var(--white)',
+              color: selectedSubCategoryId === null ? '#fff' : 'var(--ink)'
+            }}
+            onClick={() => handleSubCategorySelect(null)}
+          >
+            All Subcategories
+          </button>
+
+          {subcategories.map((sub) => (
+            <button
+              key={sub.id}
+              style={{
+                padding: '5px 12px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: selectedSubCategoryId === sub.id ? '1px solid var(--gold-dark)' : '1px solid var(--line-dark)',
+                background: selectedSubCategoryId === sub.id ? 'var(--gold-dark)' : 'var(--white)',
+                color: selectedSubCategoryId === sub.id ? '#fff' : 'var(--ink)'
+              }}
+              onClick={() => handleSubCategorySelect(sub.id)}
+            >
+              {sub.name} ({sub._count?.products || 0})
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Product Grid */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px', color: 'var(--ink-soft)' }}>Loading Products...</div>
       ) : products.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px', background: 'var(--white)', borderRadius: '12px', border: '1px solid var(--line)' }}>
-          <p style={{ fontSize: '1.1rem', color: 'var(--ink-soft)' }}>No products found in this category.</p>
+          <p style={{ fontSize: '1.1rem', color: 'var(--ink-soft)' }}>No products found in this selection.</p>
         </div>
       ) : (
         <div className="prod-grid">
