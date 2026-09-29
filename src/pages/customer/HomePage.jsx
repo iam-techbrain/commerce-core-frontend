@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import API from '../../api/axios';
 import { CartContext } from '../../context/CartContext';
 import { WishlistContext } from '../../context/WishlistContext';
-import { Heart, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
 import ProductCard from '../../components/product/ProductCard';
+import Pagination from '../../components/common/Pagination';
 
 const fallbackCategories = [
   {
@@ -337,44 +337,18 @@ const HomePage = () => {
           )}
 
           {/* REAL PAGINATION CONTROLS */}
-          {pagination && pagination.totalPages > 1 && (
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '16px',
-                marginTop: '44px'
+          {pagination && (
+            <Pagination
+              currentPage={pagination.currentPage || page}
+              totalPages={pagination.totalPages}
+              totalCount={pagination.totalCount}
+              limit={pagination.limit || 12}
+              onPageChange={(newPage) => {
+                setPage(newPage);
+                scrollToSection('products-section');
               }}
-            >
-              <button
-                className="pagination-btn"
-                disabled={page <= 1}
-                onClick={() => {
-                  setPage(page - 1);
-                  scrollToSection('products-section');
-                }}
-              >
-                <ChevronLeft size={16} />
-                <span>Prev</span>
-              </button>
-
-              <span style={{ fontWeight: 700, fontFamily: 'Space Mono, monospace', fontSize: '13px', color: 'var(--pitch)' }}>
-                Page {pagination.currentPage || page} of {pagination.totalPages}
-              </span>
-
-              <button
-                className="pagination-btn"
-                disabled={page >= pagination.totalPages}
-                onClick={() => {
-                  setPage(page + 1);
-                  scrollToSection('products-section');
-                }}
-              >
-                <span>Next</span>
-                <ChevronRight size={16} />
-              </button>
-            </div>
+              scrollToTop={false}
+            />
           )}
         </div>
       </section>

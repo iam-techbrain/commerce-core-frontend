@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import API from '../api/axios';
 import ProductCard from '../components/product/ProductCard';
-import { Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import Pagination from '../components/common/Pagination';
+import { Search, Filter } from 'lucide-react';
 
 const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -248,30 +249,15 @@ const ProductsPage = () => {
       )}
 
       {/* Pagination Controls */}
-      {pagination && pagination.totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '48px' }}>
-          <button 
-            className="btn btn-outline" 
-            style={{ color: 'var(--pitch)', borderColor: 'var(--line)' }}
-            disabled={!pagination.hasPrevPage} 
-            onClick={() => setPage(page - 1)}
-          >
-            <ChevronLeft size={18} />
-            <span>Prev</span>
-          </button>
-          <span style={{ fontWeight: 700, fontFamily: 'Space Mono, monospace', fontSize: '13px' }}>
-            Page {pagination.currentPage} of {pagination.totalPages}
-          </span>
-          <button 
-            className="btn btn-outline" 
-            style={{ color: 'var(--pitch)', borderColor: 'var(--line)' }}
-            disabled={!pagination.hasNextPage} 
-            onClick={() => setPage(page + 1)}
-          >
-            <span>Next</span>
-            <ChevronRight size={18} />
-          </button>
-        </div>
+      {pagination && (
+        <Pagination
+          currentPage={pagination.currentPage || page}
+          totalPages={pagination.totalPages}
+          totalCount={pagination.totalCount}
+          limit={pagination.limit || 12}
+          onPageChange={(newPage) => setPage(newPage)}
+          scrollToTop={true}
+        />
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
 import ProductCard from './ProductCard';
-import { ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
+import Pagination from '../common/Pagination';
+import { ShoppingBag } from 'lucide-react';
 
 const ProductGrid = ({ products, pagination, page, onPageChange }) => {
   return (
@@ -30,30 +31,15 @@ const ProductGrid = ({ products, pagination, page, onPageChange }) => {
       )}
 
       {/* Server-side Pagination Controls */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="pagination">
-          <button
-            className="btn-secondary"
-            disabled={!pagination.hasPrevPage}
-            onClick={() => onPageChange(page - 1)}
-          >
-            <ChevronLeft size={18} />
-            <span>Prev</span>
-          </button>
-
-          <span style={{ fontWeight: 600 }}>
-            Page {pagination.currentPage} of {pagination.totalPages}
-          </span>
-
-          <button
-            className="btn-secondary"
-            disabled={!pagination.hasNextPage}
-            onClick={() => onPageChange(page + 1)}
-          >
-            <span>Next</span>
-            <ChevronRight size={18} />
-          </button>
-        </div>
+      {pagination && (
+        <Pagination
+          currentPage={pagination.currentPage || page}
+          totalPages={pagination.totalPages}
+          totalCount={pagination.totalCount}
+          limit={pagination.limit || 12}
+          onPageChange={onPageChange}
+          scrollToTop={false}
+        />
       )}
     </section>
   );
