@@ -246,12 +246,12 @@ const HomePage = () => {
           <div className="cat-grid">
             {categories.slice(0, 8).map((cat) => {
               const imageSrc = cat.imageUrl
-                ? (cat.imageUrl.startsWith('http') ? cat.imageUrl : `http://localhost:5000${cat.imageUrl}`)
+                ? (cat.imageUrl.startsWith('http') ? cat.imageUrl : `${cat.imageUrl}`)
                 : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500';
 
               return (
-                <div 
-                  key={cat.id} 
+                <div
+                  key={cat.id}
                   className="cat-card"
                   onClick={() => handleCategoryClick(cat.id)}
                 >
@@ -348,8 +348,7 @@ const HomePage = () => {
               }}
             >
               <button
-                className="btn btn-outline"
-                style={{ color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--white)' }}
+                className="pagination-btn"
                 disabled={page <= 1}
                 onClick={() => {
                   setPage(page - 1);
@@ -365,8 +364,7 @@ const HomePage = () => {
               </span>
 
               <button
-                className="btn btn-outline"
-                style={{ color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--white)' }}
+                className="pagination-btn"
                 disabled={page >= pagination.totalPages}
                 onClick={() => {
                   setPage(page + 1);

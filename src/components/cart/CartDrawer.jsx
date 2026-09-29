@@ -71,7 +71,7 @@ const CartDrawer = () => {
           ) : (
             cartItems.map((item) => {
               const imageSrc = item.productImage 
-                ? (item.productImage.startsWith('http') ? item.productImage : `http://localhost:5000${item.productImage}`) 
+                ? (item.productImage.startsWith('http') ? item.productImage : `${item.productImage}`) 
                 : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200';
 
               return (

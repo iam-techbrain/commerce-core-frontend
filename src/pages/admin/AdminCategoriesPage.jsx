@@ -337,7 +337,7 @@ const AdminCategoriesPage = () => {
                     <tr key={c.id}>
                       <td style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <img
-                          src={c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `http://localhost:5000${c.imageUrl}`) : 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=100'}
+                          src={c.imageUrl ? (c.imageUrl.startsWith('http') ? c.imageUrl : `${c.imageUrl}`) : 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=100'}
                           alt={c.name}
                           style={{ width: '42px', height: '42px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
                         />

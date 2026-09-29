@@ -3,7 +3,7 @@ import React from 'react';
 const CategoryCard = ({ category, selectedCategoryId, onSelectCategory }) => {
   const isSelected = selectedCategoryId === category.id;
   const imageSrc = category.imageUrl
-    ? `http://localhost:5000${category.imageUrl}`
+    ? `${category.imageUrl}`
     : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400';
 
   return (
