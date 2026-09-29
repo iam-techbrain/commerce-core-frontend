@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import API from '../../api/axios';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { getImageUrl } from '../../utils/image.util';
+import { compressImage } from '../../utils/imageCompressor';
 import {
   Plus,
   Trash2,
@@ -20,7 +22,9 @@ import {
   Save,
   Tag,
   Settings,
-  Check
+  Check,
+  Camera,
+  Image as ImageIcon
 } from 'lucide-react';
 
 const AdminProductsPage = () => {
@@ -90,6 +94,20 @@ const AdminProductsPage = () => {
   const [showAttributesModal, setShowAttributesModal] = useState(false);
   const [newMasterAttrName, setNewMasterAttrName] = useState('');
   const [newValInputs, setNewValInputs] = useState({});
+
+  // 📸 Image Update Modal State
+  const [imageModalProduct, setImageModalProduct] = useState(null);
+  const [imageModalMode, setImageModalMode] = useState('file'); // 'file' or 'url'
+  const [imageModalFile, setImageModalFile] = useState(null);
+  const [imageModalUrl, setImageModalUrl] = useState('');
+  const [imageModalPreview, setImageModalPreview] = useState('');
+  const [imageModalUploading, setImageModalUploading] = useState(false);
+
+  // ✏️ Inline Table Edit State (Name & SKU)
+  const [editingRowId, setEditingRowId] = useState(null);
+  const [editingRowData, setEditingRowData] = useState({ name: '', sku: '' });
+  const [savingRowId, setSavingRowId] = useState(null);
+  const [rowStatusMsg, setRowStatusMsg] = useState({});
 
   const fetchProducts = async () => {
     try {
@@ -494,6 +512,169 @@ const AdminProductsPage = () => {
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Value delete error');
+    }
+  };
+
+  // -------------------- ✏️ INLINE ROW EDIT & QUICK UPDATES --------------------
+  const showRowStatus = (id, msg) => {
+    setRowStatusMsg((prev) => ({ ...prev, [id]: msg }));
+    setTimeout(() => {
+      setRowStatusMsg((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }, 2500);
+  };
+
+  const handleStartEditRow = (p) => {
+    setEditingRowId(p.id);
+    setEditingRowData({
+      name: p.name || '',
+      sku: p.sku || ''
+    });
+  };
+
+  const handleCancelEditRow = () => {
+    setEditingRowId(null);
+    setEditingRowData({ name: '', sku: '' });
+  };
+
+  const handleSaveEditRow = async (productId) => {
+    if (!editingRowData.name.trim()) {
+      alert('Product name khali nahi ho sakta!');
+      return;
+    }
+    setSavingRowId(productId);
+    try {
+      const res = await API.put(`/products/${productId}`, {
+        name: editingRowData.name.trim(),
+        sku: editingRowData.sku.trim() || null
+      });
+      if (res.data.success) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === productId ? { ...p, ...res.data.data } : p))
+        );
+        setEditingRowId(null);
+        showRowStatus(productId, 'Saved!');
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Product update error');
+    } finally {
+      setSavingRowId(null);
+    }
+  };
+
+  // Inline Brand Dropdown Change
+  const handleBrandChange = async (productId, newBrandId) => {
+    setSavingRowId(productId);
+    try {
+      const res = await API.put(`/products/${productId}`, {
+        brandId: newBrandId || null
+      });
+      if (res.data.success) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === productId ? { ...p, ...res.data.data } : p))
+        );
+        showRowStatus(productId, 'Brand Updated!');
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Brand update error');
+    } finally {
+      setSavingRowId(null);
+    }
+  };
+
+  // Inline Category Dropdown Change
+  const handleCategoryChange = async (productId, newCategoryId) => {
+    setSavingRowId(productId);
+    try {
+      const res = await API.put(`/products/${productId}`, {
+        categoryId: parseInt(newCategoryId),
+        subCategoryId: null
+      });
+      if (res.data.success) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === productId ? { ...p, ...res.data.data } : p))
+        );
+        showRowStatus(productId, 'Category Updated!');
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Category update error');
+    } finally {
+      setSavingRowId(null);
+    }
+  };
+
+  // Inline Sub-Category Dropdown Change
+  const handleSubCategoryChange = async (productId, newSubCategoryId) => {
+    setSavingRowId(productId);
+    try {
+      const res = await API.put(`/products/${productId}`, {
+        subCategoryId: newSubCategoryId ? parseInt(newSubCategoryId) : null
+      });
+      if (res.data.success) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === productId ? { ...p, ...res.data.data } : p))
+        );
+        showRowStatus(productId, 'Sub-Category Updated!');
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Sub-Category update error');
+    } finally {
+      setSavingRowId(null);
+    }
+  };
+
+  // -------------------- 📸 IMAGE MODAL HANDLERS --------------------
+  const handleOpenImageModal = (p) => {
+    setImageModalProduct(p);
+    setImageModalMode('file');
+    setImageModalFile(null);
+    setImageModalUrl(p.imageUrl || '');
+    setImageModalPreview(getImageUrl(p.imageUrl, null, p.category?.name));
+  };
+
+  const handleImageModalFileChange = async (e) => {
+    const raw = e.target.files[0];
+    if (raw) {
+      const comp = await compressImage(raw);
+      setImageModalFile(comp);
+      setImageModalPreview(URL.createObjectURL(comp));
+    }
+  };
+
+  const handleSaveImageModal = async () => {
+    if (!imageModalProduct) return;
+    setImageModalUploading(true);
+    try {
+      let updatedData = null;
+      if (imageModalMode === 'file' && imageModalFile) {
+        const formData = new FormData();
+        formData.append('image', imageModalFile);
+        const res = await API.put(`/products/${imageModalProduct.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        if (res.data.success) updatedData = res.data.data;
+      } else if (imageModalMode === 'url' && imageModalUrl.trim()) {
+        const res = await API.put(`/products/${imageModalProduct.id}`, {
+          imageUrl: imageModalUrl.trim(),
+          downloadImages: true
+        });
+        if (res.data.success) updatedData = res.data.data;
+      }
+
+      if (updatedData) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === imageModalProduct.id ? { ...p, ...updatedData } : p))
+        );
+        showRowStatus(imageModalProduct.id, 'Image Updated!');
+        setImageModalProduct(null);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Image update error');
+    } finally {
+      setImageModalUploading(false);
     }
   };
 
@@ -1240,11 +1421,10 @@ const AdminProductsPage = () => {
                         parsedAttrs = null;
                       }
 
-                      const displayImg = v.imageUrl
-                        ? (v.imageUrl.startsWith('http') ? v.imageUrl : `${v.imageUrl}`)
-                        : selectedProductForVariants.imageUrl
-                        ? (selectedProductForVariants.imageUrl.startsWith('http') ? selectedProductForVariants.imageUrl : `${selectedProductForVariants.imageUrl}`)
-                        : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100';
+                      const displayImg = getImageUrl(
+                        v.imageUrl || selectedProductForVariants.imageUrl,
+                        'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100'
+                      );
 
                       if (isEditingThis) {
                         return (
@@ -1922,6 +2102,206 @@ const AdminProductsPage = () => {
           </div>
         )}
 
+        {/* -------------------- 📸 IMAGE UPDATE MODAL -------------------- */}
+        {imageModalProduct && (
+          <div
+            className="cart-overlay"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.7)',
+              backdropFilter: 'blur(4px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+              padding: '16px'
+            }}
+            onClick={() => !imageModalUploading && setImageModalProduct(null)}
+          >
+            <div
+              className="auth-card"
+              style={{
+                maxWidth: '520px',
+                width: '100%',
+                background: '#ffffff',
+                color: '#141916',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)',
+                border: '1px solid #e2e8f0'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '10px',
+                      background: 'rgba(212, 155, 58, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--gold-dark, #A07022)'
+                    }}
+                  >
+                    <Camera size={22} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--pitch, #11362B)' }}>
+                      Update Product Image
+                    </h3>
+                    <p style={{ fontSize: '0.8rem', color: '#64748b', margin: '2px 0 0 0' }}>
+                      {imageModalProduct.name}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setImageModalProduct(null)}
+                  disabled={imageModalUploading}
+                  style={{
+                    background: 'rgba(0,0,0,0.05)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '32px',
+                    height: '32px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Preview Section */}
+              <div style={{ textAlign: 'center', marginBottom: '20px', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Image Preview
+                </div>
+                <img
+                  src={imageModalPreview || getImageUrl(imageModalProduct.imageUrl, null, imageModalProduct.category?.name)}
+                  alt="Preview"
+                  style={{
+                    maxWidth: '180px',
+                    maxHeight: '180px',
+                    borderRadius: '10px',
+                    objectFit: 'contain',
+                    border: '2px solid #cbd5e1',
+                    background: '#ffffff',
+                    padding: '4px'
+                  }}
+                  onError={(e) => {
+                    e.target.src = 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=300';
+                  }}
+                />
+                {imageModalFile && (
+                  <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700, marginTop: '6px' }}>
+                    ✓ Compressed to ~{(imageModalFile.size / 1024).toFixed(1)} KB (Fast loading WebP)
+                  </div>
+                )}
+              </div>
+
+              {/* Mode Switcher */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                <button
+                  type="button"
+                  onClick={() => setImageModalMode('file')}
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    borderRadius: '8px',
+                    border: imageModalMode === 'file' ? '2px solid var(--pitch, #11362B)' : '1px solid #cbd5e1',
+                    background: imageModalMode === 'file' ? 'var(--pitch, #11362B)' : '#ffffff',
+                    color: imageModalMode === 'file' ? '#ffffff' : '#334155',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  📁 Upload File
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageModalMode('url')}
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    borderRadius: '8px',
+                    border: imageModalMode === 'url' ? '2px solid var(--pitch, #11362B)' : '1px solid #cbd5e1',
+                    background: imageModalMode === 'url' ? 'var(--pitch, #11362B)' : '#ffffff',
+                    color: imageModalMode === 'url' ? '#ffffff' : '#334155',
+                    fontWeight: 700,
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🌐 Image URL
+                </button>
+              </div>
+
+              {/* Input depending on mode */}
+              {imageModalMode === 'file' ? (
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '6px' }}>
+                    Choose New Image File (Auto-compressed to WebP):
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageModalFileChange}
+                    className="form-control"
+                    style={{ fontSize: '0.82rem', padding: '8px' }}
+                  />
+                </div>
+              ) : (
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '6px' }}>
+                    Image URL:
+                  </label>
+                  <input
+                    type="text"
+                    value={imageModalUrl}
+                    onChange={(e) => {
+                      setImageModalUrl(e.target.value);
+                      setImageModalPreview(e.target.value);
+                    }}
+                    placeholder="https://images.unsplash.com/..."
+                    className="form-control"
+                    style={{ fontSize: '0.82rem', padding: '8px 12px' }}
+                  />
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn-outline"
+                  onClick={() => setImageModalProduct(null)}
+                  disabled={imageModalUploading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleSaveImageModal}
+                  disabled={imageModalUploading || (imageModalMode === 'file' && !imageModalFile && !imageModalPreview)}
+                  style={{ minWidth: '120px' }}
+                >
+                  {imageModalUploading ? 'Uploading...' : 'Save & Update Image'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* -------------------- 📋 PRODUCTS TABLE -------------------- */}
         <div className="admin-card">
           <div className="admin-card-header">
@@ -1953,13 +2333,13 @@ const AdminProductsPage = () => {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Product</th>
-                    <th>Category</th>
-                    <th>Brand</th>
+                    <th style={{ minWidth: '280px' }}>Product & SKU</th>
+                    <th style={{ minWidth: '200px' }}>Category & Sub-Category</th>
+                    <th style={{ minWidth: '160px' }}>Brand</th>
                     <th>Pricing & MRP</th>
                     <th>Variants</th>
                     <th>Stock</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
+                    <th style={{ textAlign: 'right', minWidth: '130px' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1973,54 +2353,245 @@ const AdminProductsPage = () => {
                     products.map((p) => {
                       const hasDiscount = p.mrp && p.mrp > p.price;
                       const discountPercent = hasDiscount ? Math.round(((p.mrp - p.price) / p.mrp) * 100) : 0;
+                      const isEditingThisRow = editingRowId === p.id;
+                      const isSavingThis = savingRowId === p.id;
 
                       return (
                         <tr key={p.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
-                          {/* Image & Name */}
-                          <td style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <img
-                              src={
-                                p.imageUrl
-                                  ? p.imageUrl.startsWith('http')
-                                    ? p.imageUrl
-                                    : `${p.imageUrl}`
-                                  : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=100'
-                              }
-                              alt={p.name}
-                              style={{ width: '44px', height: '44px', borderRadius: '6px', objectFit: 'cover' }}
-                            />
-                            <div>
-                              <div style={{ fontWeight: 600 }}>{p.name}</div>
-                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                                SKU: <code>{p.sku || `PRD-${p.id}`}</code>
+                          {/* Image, Name & SKU with Inline Edit */}
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              {/* Product Image Thumbnail with Quick Modal Trigger */}
+                              <div
+                                style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}
+                                onClick={() => handleOpenImageModal(p)}
+                                title="Click to change product image"
+                              >
+                                <img
+                                  src={getImageUrl(p.imageUrl, null, p.category?.name)}
+                                  alt={p.name}
+                                  style={{
+                                    width: '48px',
+                                    height: '48px',
+                                    borderRadius: '8px',
+                                    objectFit: 'cover',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    background: '#1a1f2c'
+                                  }}
+                                  onError={(e) => {
+                                    e.target.src = 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=100';
+                                  }}
+                                />
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    bottom: '-3px',
+                                    right: '-3px',
+                                    background: 'var(--gold, #D49B3A)',
+                                    color: '#111',
+                                    borderRadius: '4px',
+                                    padding: '2px 4px',
+                                    fontSize: '9px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2px',
+                                    fontWeight: 800,
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                                  }}
+                                  title="Update Image"
+                                >
+                                  <Camera size={10} />
+                                </div>
                               </div>
+
+                              {/* Inline Name & SKU Editor */}
+                              {isEditingThisRow ? (
+                                <div style={{ flex: 1, minWidth: '180px' }}>
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    style={{
+                                      fontSize: '0.85rem',
+                                      padding: '6px 10px',
+                                      marginBottom: '4px',
+                                      background: '#ffffff',
+                                      border: '1.5px solid var(--gold, #D49B3A)',
+                                      color: '#0f172a',
+                                      borderRadius: '6px',
+                                      width: '100%',
+                                      fontWeight: 600
+                                    }}
+                                    value={editingRowData.name}
+                                    onChange={(e) => setEditingRowData({ ...editingRowData, name: e.target.value })}
+                                    placeholder="Product Name"
+                                    autoFocus
+                                  />
+                                  <input
+                                    type="text"
+                                    className="form-control"
+                                    style={{
+                                      fontSize: '0.76rem',
+                                      padding: '5px 8px',
+                                      background: '#ffffff',
+                                      border: '1px solid #cbd5e1',
+                                      color: '#334155',
+                                      borderRadius: '6px',
+                                      width: '100%'
+                                    }}
+                                    value={editingRowData.sku}
+                                    onChange={(e) => setEditingRowData({ ...editingRowData, sku: e.target.value })}
+                                    placeholder="SKU"
+                                  />
+                                  <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                                    <button
+                                      type="button"
+                                      className="btn-primary"
+                                      style={{ padding: '3px 8px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                      disabled={isSavingThis}
+                                      onClick={() => handleSaveEditRow(p.id)}
+                                    >
+                                      <Check size={12} />
+                                      <span>{isSavingThis ? 'Saving...' : 'Save'}</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn-outline"
+                                      style={{ padding: '3px 8px', fontSize: '0.72rem' }}
+                                      onClick={handleCancelEditRow}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ flex: 1, minWidth: '150px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span style={{ fontWeight: 700, fontSize: '0.92rem', color: '#1e293b' }}>{p.name}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartEditRow(p)}
+                                      style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: '#64748b',
+                                        cursor: 'pointer',
+                                        padding: '2px',
+                                        display: 'inline-flex'
+                                      }}
+                                      title="Edit Name & SKU"
+                                    >
+                                      <Edit2 size={13} />
+                                    </button>
+                                  </div>
+                                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                                    SKU: <code style={{ background: '#f1f5f9', color: '#334155', padding: '1px 5px', borderRadius: '4px', border: '1px solid #e2e8f0', fontSize: '0.72rem' }}>{p.sku || `PRD-${p.id}`}</code>
+                                  </div>
+                                  {rowStatusMsg[p.id] && (
+                                    <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 800, marginTop: '2px', display: 'inline-block' }}>
+                                      ✓ {rowStatusMsg[p.id]}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </td>
 
-                          {/* Category */}
-                          <td style={{ padding: '12px', fontSize: '0.85rem' }}>
-                            {p.category?.name || 'Sports'}
+                          {/* Category & Sub-Category Dropdowns */}
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {/* Category Dropdown */}
+                              <select
+                                className="form-control"
+                                value={p.categoryId || ''}
+                                onChange={(e) => handleCategoryChange(p.id, e.target.value)}
+                                style={{
+                                  fontSize: '0.82rem',
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  background: '#ffffff',
+                                  border: '1px solid #cbd5e1',
+                                  color: '#1e293b',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  width: '100%',
+                                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                                }}
+                                disabled={isSavingThis}
+                              >
+                                <option value="" disabled style={{ color: '#94a3b8' }}>Select Category</option>
+                                {categories.map((c) => (
+                                  <option key={c.id} value={c.id} style={{ color: '#1e293b', background: '#ffffff' }}>
+                                    {c.name}
+                                  </option>
+                                ))}
+                              </select>
+
+                              {/* Sub-Category Dropdown */}
+                              {(() => {
+                                const currentCat = categories.find((c) => c.id === p.categoryId);
+                                const subCats = currentCat?.subcategories || [];
+                                return (
+                                  <select
+                                    className="form-control"
+                                    value={p.subCategoryId || ''}
+                                    onChange={(e) => handleSubCategoryChange(p.id, e.target.value)}
+                                    style={{
+                                      fontSize: '0.78rem',
+                                      padding: '5px 8px',
+                                      borderRadius: '6px',
+                                      background: subCats.length > 0 ? '#f8fafc' : '#f1f5f9',
+                                      border: '1px solid #cbd5e1',
+                                      color: p.subCategoryId ? '#11362B' : '#64748b',
+                                      fontWeight: p.subCategoryId ? 700 : 500,
+                                      cursor: subCats.length > 0 ? 'pointer' : 'not-allowed',
+                                      width: '100%'
+                                    }}
+                                    disabled={isSavingThis || subCats.length === 0}
+                                  >
+                                    <option value="" style={{ color: '#94a3b8' }}>{subCats.length > 0 ? '— Select Sub-Category —' : 'No Sub-Categories'}</option>
+                                    {subCats.map((sc) => (
+                                      <option key={sc.id} value={sc.id} style={{ color: '#1e293b', background: '#ffffff' }}>
+                                        {sc.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                );
+                              })()}
+                            </div>
                           </td>
 
-                          {/* Brand */}
+                          {/* Brand Dropdown */}
                           <td style={{ padding: '12px' }}>
-                            <span
+                            <select
+                              className="form-control"
+                              value={p.brandId || ''}
+                              onChange={(e) => handleBrandChange(p.id, e.target.value)}
                               style={{
-                                padding: '3px 8px',
-                                borderRadius: '12px',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                fontSize: '0.78rem',
-                                fontWeight: 600,
-                                color: p.brand?.name || p.brandName ? 'var(--gold)' : 'var(--text-muted)'
+                                fontSize: '0.82rem',
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                background: '#ffffff',
+                                border: '1px solid #cbd5e1',
+                                color: p.brandId ? 'var(--pitch, #11362B)' : '#64748b',
+                                fontWeight: p.brandId ? 700 : 500,
+                                cursor: 'pointer',
+                                width: '100%',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
                               }}
+                              disabled={isSavingThis}
                             >
-                              {p.brand?.name || p.brandName || 'No Brand'}
-                            </span>
+                              <option value="" style={{ color: '#94a3b8' }}>No Brand / Select</option>
+                              {brands.map((b) => (
+                                <option key={b.id} value={b.id} style={{ color: '#1e293b', background: '#ffffff' }}>
+                                  {b.name}
+                                </option>
+                              ))}
+                            </select>
                           </td>
 
                           {/* Price & MRP */}
                           <td style={{ padding: '12px' }}>
-                            <div style={{ fontWeight: 700, color: 'var(--gold)', fontSize: '0.95rem' }}>
+                            <div style={{ fontWeight: 800, color: 'var(--pitch, #11362B)', fontSize: '0.98rem' }}>
                               ₹{p.price?.toLocaleString('en-IN')}
                             </div>
                             {hasDiscount && (
@@ -2145,6 +2716,22 @@ const AdminProductsPage = () => {
                           {/* Actions */}
                           <td style={{ padding: '12px', textAlign: 'right' }}>
                             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                              <button
+                                className="icon-btn"
+                                style={{ color: 'var(--gold)', borderColor: 'rgba(201, 168, 76, 0.3)' }}
+                                onClick={() => handleOpenImageModal(p)}
+                                title="Update Product Photo"
+                              >
+                                <Camera size={16} />
+                              </button>
+                              <button
+                                className="icon-btn"
+                                style={{ color: isEditingThisRow ? 'var(--gold)' : 'var(--text-muted)' }}
+                                onClick={() => (isEditingThisRow ? handleCancelEditRow() : handleStartEditRow(p))}
+                                title="Edit Name & SKU"
+                              >
+                                <Edit2 size={16} />
+                              </button>
                               <button
                                 className="icon-btn"
                                 style={{ color: 'var(--gold)', borderColor: 'rgba(201, 168, 76, 0.3)' }}
