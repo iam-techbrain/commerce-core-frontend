@@ -376,11 +376,11 @@ const ProfilePage = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                       <div className="form-group">
                         <label>Full Name</label>
-                        <input className="form-control" placeholder="Afzal Khan" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                        <input className="form-control" placeholder="Enter Full Name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
                       </div>
                       <div className="form-group">
                         <label>Phone Number</label>
-                        <input className="form-control" placeholder="9876543210" required value={phone} onChange={(e) => setPhone(e.target.value)} />
+                        <input className="form-control" placeholder="Enter Mobile No" required value={phone} onChange={(e) => setPhone(e.target.value)} />
                       </div>
                     </div>
                     <div className="form-group" style={{ marginBottom: '16px' }}>

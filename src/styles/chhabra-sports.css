@@ -1831,3 +1831,34 @@ footer {
   cursor: pointer !important;
 }
 
+/* Pagination Nav Buttons */
+.pagination-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 10px 18px !important;
+  font-family: 'Space Mono', monospace !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: var(--pitch) !important;
+  background: var(--white) !important;
+  border: 1.5px solid var(--line) !important;
+  border-radius: var(--radius-sm) !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: #D4A017 !important;
+  color: #D4A017 !important;
+  background: rgba(212, 160, 23, 0.08) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(212, 160, 23, 0.2) !important;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+

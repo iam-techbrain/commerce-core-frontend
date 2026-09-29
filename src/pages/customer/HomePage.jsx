@@ -249,8 +249,8 @@ const HomePage = () => {
                 : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500';
 
               return (
-                <div 
-                  key={cat.id} 
+                <div
+                  key={cat.id}
                   className="cat-card"
                   onClick={() => handleCategoryClick(cat.id)}
                 >
@@ -341,9 +341,9 @@ const HomePage = () => {
                   <div key={p.id} className="prod-card">
                     <div className="prod-media">
                       {p.tag && <div className={`prod-tag ${p.tag.toLowerCase()}`}>{p.tag}</div>}
-                      
+
                       {/* Wishlist Button */}
-                      <button 
+                      <button
                         className={`prod-wish ${wishlisted ? 'active' : ''}`}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -356,7 +356,7 @@ const HomePage = () => {
                       </button>
 
                       <img className="primary" src={imageSrc} alt={p.name} />
-                      
+
                       <button
                         className="quick-add-btn"
                         disabled={isOutOfStock}
@@ -409,8 +409,7 @@ const HomePage = () => {
               }}
             >
               <button
-                className="btn btn-outline"
-                style={{ color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--white)' }}
+                className="pagination-btn"
                 disabled={page <= 1}
                 onClick={() => {
                   setPage(page - 1);
@@ -426,8 +425,7 @@ const HomePage = () => {
               </span>
 
               <button
-                className="btn btn-outline"
-                style={{ color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--white)' }}
+                className="pagination-btn"
                 disabled={page >= pagination.totalPages}
                 onClick={() => {
                   setPage(page + 1);

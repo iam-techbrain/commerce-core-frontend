@@ -107,7 +107,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
       // Step 2: Load Razorpay Script into Browser DOM
       const isLoaded = await loadRazorpayScript();
-      
+
       if (!isLoaded) {
         // Fallback for offline/test mode if script load fails
         if (window.confirm('Razorpay Script Load nahi ho saka. Dynamic Test Mode Payment simulate karein?')) {
@@ -148,7 +148,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
       };
 
       const paymentWindow = new window.Razorpay(options);
-      
+
       paymentWindow.on('payment.failed', function (response) {
         if (window.confirm(`Payment Gateway Notice: ${response.error.description || 'Test Mode'}. Test simulated payment proceed karein?`)) {
           completePaymentVerification(razorpay.orderId, `pay_test_dummy_${Date.now()}`, 'TEST_SIMULATED_SIGNATURE');
@@ -194,7 +194,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
   return (
     <div className="cart-overlay" style={{ zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="profile-card" style={{ maxWidth: '620px', width: '92%', maxHeight: '90vh', overflowY: 'auto', padding: '28px', background: 'var(--white)', borderRadius: 'var(--radius)' }}>
-        
+
         {/* Modal Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--line)', paddingBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -229,29 +229,29 @@ const CheckoutModal = ({ isOpen, onClose }) => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label>Full Name</label>
-                  <input className="form-control" required value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Afzal Khan" />
+                  <input className="form-control" required value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Enter Full Name" />
                 </div>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label>Phone Number</label>
-                  <input className="form-control" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="9876543210" />
+                  <input className="form-control" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="Enter Phone Number" />
                 </div>
               </div>
               <div className="form-group" style={{ marginBottom: '12px' }}>
                 <label>Address Line</label>
-                <input className="form-control" required value={addressLine1} onChange={e => setAddressLine1(e.target.value)} placeholder="House / Flat No., Road, Landmark" />
+                <input className="form-control" required value={addressLine1} onChange={e => setAddressLine1(e.target.value)} placeholder="Enter Address" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label>City</label>
-                  <input className="form-control" required value={city} onChange={e => setCity(e.target.value)} placeholder="Patna" />
+                  <input className="form-control" required value={city} onChange={e => setCity(e.target.value)} placeholder="Enter City Name" />
                 </div>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label>State</label>
-                  <input className="form-control" required value={state} onChange={e => setState(e.target.value)} placeholder="Bihar" />
+                  <input className="form-control" required value={state} onChange={e => setState(e.target.value)} placeholder="Enter State Name" />
                 </div>
                 <div className="form-group" style={{ margin: 0 }}>
                   <label>Pincode</label>
-                  <input className="form-control" required value={pincode} onChange={e => setPincode(e.target.value)} placeholder="800020" />
+                  <input className="form-control" required value={pincode} onChange={e => setPincode(e.target.value)} placeholder="Enter Pincode" />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -273,7 +273,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {addresses.map(addr => (
-                <div 
+                <div
                   key={addr.id}
                   onClick={() => setSelectedAddressId(addr.id)}
                   style={{
@@ -321,8 +321,8 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
         {/* Payment Action Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <button 
-            className="btn btn-smash" 
+          <button
+            className="btn btn-smash"
             style={{ width: '100%', padding: '14px', fontSize: '12px', justifyContent: 'center' }}
             onClick={() => handlePayNow(false)}
             disabled={processingPayment || loading}
@@ -331,8 +331,8 @@ const CheckoutModal = ({ isOpen, onClose }) => {
             <span>{processingPayment ? 'Processing Gateway...' : `Pay ₹${subtotal.toLocaleString('en-IN')} via Razorpay`}</span>
           </button>
 
-          <button 
-            className="btn btn-gold" 
+          <button
+            className="btn btn-gold"
             style={{ width: '100%', padding: '12px', fontSize: '11px', justifyContent: 'center' }}
             onClick={() => handlePayNow(true)}
             disabled={processingPayment || loading}
