@@ -53,7 +53,13 @@ const ProductDetailPage = () => {
 
         // Set default variant or color/size
         if (prodData.variants && prodData.variants.length > 0) {
-          setSelectedVariant(prodData.variants[0]);
+          const sorted = [...prodData.variants].sort((a, b) => {
+            const numA = parseFloat((a.title || '').replace(/[^0-9.]/g, ''));
+            const numB = parseFloat((b.title || '').replace(/[^0-9.]/g, ''));
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            return (a.title || '').localeCompare(b.title || '');
+          });
+          setSelectedVariant(sorted[0]);
         }
 
         // Fetch related products (same category or all products)
@@ -139,10 +145,10 @@ const ProductDetailPage = () => {
   const specifications = [
     { label: 'Brand', value: product.brand?.name || product.brandName || 'Chhabra Sports Original' },
     { label: 'Category', value: product.category?.name || 'Racquet Sports' },
-    { label: 'Frame Material', value: product.material || 'HM Graphite / Nanocell Neo' },
-    { label: 'Weight & Grip', value: selectedVariant?.name || '4U (83g) / G5' },
-    { label: 'Flexibility', value: 'Medium / Stiff Pro Flex' },
-    { label: 'Recommended String Tension', value: '24 - 30 lbs (Gutting Available)' },
+    // { label: 'Frame Material', value: product.material || 'HM Graphite / Nanocell Neo' },
+    // { label: 'Weight / Option', value: selectedVariant?.title || selectedVariant?.name || 'Standard' },
+    // { label: 'Flexibility', value: 'Medium / Stiff Pro Flex' },
+    // { label: 'Recommended String Tension', value: '24 - 30 lbs (Gutting Available)' },
     { label: 'Country of Origin', value: 'Japan / Taiwan' },
     { label: 'Warranty', value: '1 Year Manufacturer Defect Warranty' }
   ];
@@ -382,45 +388,89 @@ const ProductDetailPage = () => {
             </div>
 
             {/* VARIANTS SELECTION (IF ANY) */}
-            {product.variants && product.variants.length > 0 && (
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ fontSize: '12px', fontFamily: 'Space Mono', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink)', display: 'block', marginBottom: '10px' }}>
-                  Select Specification / Weight-Grip Option:
-                </label>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  {product.variants.map((v) => {
-                    const isSel = selectedVariant?.id === v.id;
-                    return (
-                      <button
-                        key={v.id}
-                        onClick={() => {
-                          setSelectedVariant(v);
-                          if (v.imageUrl) setSelectedImage(getImageUrl(v.imageUrl));
-                        }}
-                        style={{
-                          padding: '10px 18px',
-                          borderRadius: 'var(--radius)',
-                          border: isSel ? '2px solid var(--pitch)' : '1px solid var(--line)',
-                          background: isSel ? 'var(--pitch-dark)' : 'var(--white)',
-                          color: isSel ? 'var(--parchment)' : 'var(--ink)',
-                          fontSize: '13px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          transition: 'all 0.2s'
-                        }}
-                      >
-                        {isSel && <Check size={14} color="var(--gold)" />}
-                        <span>{v.name}</span>
-                        <span style={{ fontSize: '11px', opacity: 0.8 }}>₹{v.price}</span>
-                      </button>
-                    );
-                  })}
+            {product.variants && product.variants.length > 0 && (() => {
+              const sortedVariants = [...product.variants].sort((a, b) => {
+                const numA = parseFloat((a.title || '').replace(/[^0-9.]/g, ''));
+                const numB = parseFloat((b.title || '').replace(/[^0-9.]/g, ''));
+                if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                return (a.title || '').localeCompare(b.title || '');
+              });
+
+              const hasSizes = sortedVariants.some(
+                (v) =>
+                  (v.title && v.title.toLowerCase().includes('size')) ||
+                  (v.attributes && v.attributes.includes('Size'))
+              );
+              const optionGroupLabel = hasSizes ? 'Select Size' : 'Select Option / Specification';
+
+              return (
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                    <label style={{ fontSize: '12.5px', fontWeight: 800, textTransform: 'uppercase', color: 'var(--ink)', letterSpacing: '0.5px' }}>
+                      {optionGroupLabel}:{' '}
+                      <span style={{ color: 'var(--pitch)', background: 'rgba(212, 155, 58, 0.18)', padding: '2px 8px', borderRadius: '4px', marginLeft: '4px' }}>
+                        {selectedVariant?.title || selectedVariant?.name || 'Default Option'}
+                      </span>
+                    </label>
+                    {selectedVariant && (
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: (selectedVariant.stock || 0) > 0 ? '#059669' : 'var(--oxblood)' }}>
+                        {(selectedVariant.stock || 0) > 0 ? `● In Stock (${selectedVariant.stock} units)` : '● Out of Stock'}
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {sortedVariants.map((v) => {
+                      const isSel = selectedVariant?.id === v.id;
+                      const isVarOut = (v.stock || 0) <= 0;
+                      const displayTitle = v.title || v.name || v.sku || 'Option';
+
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          disabled={isVarOut}
+                          onClick={() => {
+                            setSelectedVariant(v);
+                            if (v.imageUrl) setSelectedImage(getImageUrl(v.imageUrl));
+                          }}
+                          style={{
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            border: isSel ? '2px solid var(--pitch)' : '1px solid var(--line)',
+                            background: isSel ? 'var(--pitch)' : (isVarOut ? 'rgba(0,0,0,0.03)' : '#ffffff'),
+                            color: isSel ? '#ffffff' : (isVarOut ? '#9ca3af' : 'var(--ink)'),
+                            cursor: isVarOut ? 'not-allowed' : 'pointer',
+                            display: 'inline-flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '3px',
+                            minWidth: '84px',
+                            boxShadow: isSel ? '0 4px 14px rgba(17, 54, 43, 0.25)' : 'var(--shadow-sm)',
+                            transition: 'all 0.2s ease',
+                            opacity: isVarOut ? 0.5 : 1
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {isSel && <Check size={13} color="var(--gold)" />}
+                            <span style={{ fontWeight: 800, fontSize: '13px' }}>{displayTitle}</span>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              color: isSel ? 'var(--gold)' : 'var(--gold-dark)'
+                            }}
+                          >
+                            ₹{v.price?.toLocaleString('en-IN')}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* QUANTITY & BUY BUTTONS */}
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap' }}>
