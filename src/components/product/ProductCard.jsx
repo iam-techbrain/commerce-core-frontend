@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { CartContext } from '../../context/CartContext';
 import { WishlistContext } from '../../context/WishlistContext';
 import { ShoppingCart, Heart, Layers, X, Check } from 'lucide-react';
+import { getImageUrl } from '../../utils/image.util';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useContext(CartContext);
@@ -12,15 +13,7 @@ const ProductCard = ({ product }) => {
     product.variants && product.variants.length > 0 ? product.variants[0] : null
   );
 
-  const activeImage = selectedVariant?.imageUrl
-    ? (selectedVariant.imageUrl.startsWith('http')
-        ? selectedVariant.imageUrl
-        : `${selectedVariant.imageUrl}`)
-    : product.imageUrl
-    ? (product.imageUrl.startsWith('http')
-        ? product.imageUrl
-        : `${product.imageUrl}`)
-    : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500';
+  const activeImage = getImageUrl(selectedVariant?.imageUrl || product.imageUrl);
 
   const isOutOfStock = product.stock <= 0;
   const wishlisted = isInWishlist(product.id);
