@@ -210,7 +210,7 @@ const AdminBrandsPage = () => {
                       <tr key={b.id}>
                         <td style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <img
-                            src={b.logoUrl ? (b.logoUrl.startsWith('http') ? b.logoUrl : `http://localhost:5000${b.logoUrl}`) : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100'}
+                            src={b.logoUrl ? (b.logoUrl.startsWith('http') ? b.logoUrl : `${b.logoUrl}`) : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100'}
                             alt={b.name}
                             style={{ width: '42px', height: '42px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--admin-border)' }}
                           />

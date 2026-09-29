@@ -41,7 +41,7 @@ const CategoriesPage = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
           {categories.map((cat) => {
             const imageSrc = cat.imageUrl
-              ? (cat.imageUrl.startsWith('http') ? cat.imageUrl : `http://localhost:5000${cat.imageUrl}`)
+              ? (cat.imageUrl.startsWith('http') ? cat.imageUrl : `${cat.imageUrl}`)
               : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500';
 
             return (

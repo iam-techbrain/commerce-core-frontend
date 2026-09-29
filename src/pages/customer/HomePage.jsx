@@ -245,7 +245,7 @@ const HomePage = () => {
           <div className="cat-grid">
             {categories.slice(0, 8).map((cat) => {
               const imageSrc = cat.imageUrl
-                ? (cat.imageUrl.startsWith('http') ? cat.imageUrl : `http://localhost:5000${cat.imageUrl}`)
+                ? (cat.imageUrl.startsWith('http') ? cat.imageUrl : `${cat.imageUrl}`)
                 : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500';
 
               return (
@@ -331,7 +331,7 @@ const HomePage = () => {
             <div className="prod-grid">
               {products.map((p) => {
                 const imageSrc = p.imageUrl
-                  ? (p.imageUrl.startsWith('http') ? p.imageUrl : `http://localhost:5000${p.imageUrl}`)
+                  ? (p.imageUrl.startsWith('http') ? p.imageUrl : `${p.imageUrl}`)
                   : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500';
 
                 const isOutOfStock = p.stock <= 0;

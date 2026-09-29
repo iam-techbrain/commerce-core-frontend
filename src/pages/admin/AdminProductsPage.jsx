@@ -1150,7 +1150,7 @@ const AdminProductsPage = () => {
                       selectedProductForVariants.imageUrl
                         ? selectedProductForVariants.imageUrl.startsWith('http')
                           ? selectedProductForVariants.imageUrl
-                          : `http://localhost:5000${selectedProductForVariants.imageUrl}`
+                          : `${selectedProductForVariants.imageUrl}`
                         : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200'
                     }
                     alt={selectedProductForVariants.name}
@@ -1241,9 +1241,9 @@ const AdminProductsPage = () => {
                       }
 
                       const displayImg = v.imageUrl
-                        ? (v.imageUrl.startsWith('http') ? v.imageUrl : `http://localhost:5000${v.imageUrl}`)
+                        ? (v.imageUrl.startsWith('http') ? v.imageUrl : `${v.imageUrl}`)
                         : selectedProductForVariants.imageUrl
-                        ? (selectedProductForVariants.imageUrl.startsWith('http') ? selectedProductForVariants.imageUrl : `http://localhost:5000${selectedProductForVariants.imageUrl}`)
+                        ? (selectedProductForVariants.imageUrl.startsWith('http') ? selectedProductForVariants.imageUrl : `${selectedProductForVariants.imageUrl}`)
                         : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100';
 
                       if (isEditingThis) {
@@ -1983,7 +1983,7 @@ const AdminProductsPage = () => {
                                 p.imageUrl
                                   ? p.imageUrl.startsWith('http')
                                     ? p.imageUrl
-                                    : `http://localhost:5000${p.imageUrl}`
+                                    : `${p.imageUrl}`
                                   : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=100'
                               }
                               alt={p.name}

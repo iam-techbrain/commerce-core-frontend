@@ -302,7 +302,7 @@ const ProfilePage = () => {
                               item.product?.imageUrl
                                 ? item.product.imageUrl.startsWith('http')
                                   ? item.product.imageUrl
-                                  : `http://localhost:5000${item.product.imageUrl}`
+                                  : `${item.product.imageUrl}`
                                 : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=100'
                             }
                             alt={item.product?.name}
@@ -474,7 +474,7 @@ const ProfilePage = () => {
                     const imageSrc = prod.imageUrl
                       ? prod.imageUrl.startsWith('http')
                         ? prod.imageUrl
-                        : `http://localhost:5000${prod.imageUrl}`
+                        : `${prod.imageUrl}`
                       : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500';
 
                     return (

@@ -15,11 +15,11 @@ const ProductCard = ({ product }) => {
   const activeImage = selectedVariant?.imageUrl
     ? (selectedVariant.imageUrl.startsWith('http')
         ? selectedVariant.imageUrl
-        : `http://localhost:5000${selectedVariant.imageUrl}`)
+        : `${selectedVariant.imageUrl}`)
     : product.imageUrl
     ? (product.imageUrl.startsWith('http')
         ? product.imageUrl
-        : `http://localhost:5000${product.imageUrl}`)
+        : `${product.imageUrl}`)
     : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500';
 
   const isOutOfStock = product.stock <= 0;
