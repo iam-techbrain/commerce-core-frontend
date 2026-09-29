@@ -4,6 +4,7 @@ import API from '../../api/axios';
 import { CartContext } from '../../context/CartContext';
 import { WishlistContext } from '../../context/WishlistContext';
 import { Heart, ChevronLeft, ChevronRight, ShoppingCart } from 'lucide-react';
+import ProductCard from '../../components/product/ProductCard';
 
 const fallbackCategories = [
   {
@@ -329,71 +330,9 @@ const HomePage = () => {
             </div>
           ) : (
             <div className="prod-grid">
-              {products.map((p) => {
-                const imageSrc = p.imageUrl
-                  ? (p.imageUrl.startsWith('http') ? p.imageUrl : `http://localhost:5000${p.imageUrl}`)
-                  : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500';
-
-                const isOutOfStock = p.stock <= 0;
-                const wishlisted = isInWishlist(p.id);
-
-                return (
-                  <div key={p.id} className="prod-card">
-                    <div className="prod-media">
-                      {p.tag && <div className={`prod-tag ${p.tag.toLowerCase()}`}>{p.tag}</div>}
-                      
-                      {/* Wishlist Button */}
-                      <button 
-                        className={`prod-wish ${wishlisted ? 'active' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleWishlist(p);
-                        }}
-                        aria-label="Toggle wishlist"
-                        title={wishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
-                      >
-                        <Heart size={16} fill={wishlisted ? 'var(--oxblood)' : 'none'} color={wishlisted ? 'var(--oxblood)' : 'var(--ink)'} />
-                      </button>
-
-                      <img className="primary" src={imageSrc} alt={p.name} />
-                      
-                      <button
-                        className="quick-add-btn"
-                        disabled={isOutOfStock}
-                        onClick={() => addToCart(p.id, 1)}
-                      >
-                        {isOutOfStock ? 'Out of Stock' : '+ Add to Cart'}
-                      </button>
-                    </div>
-
-                    <div className="prod-info">
-                      <div>
-                        <div className="prod-brand">{p.brand?.name || p.brandName || p.category?.name || 'Chhabra Sports'}</div>
-                        <div className="prod-name" title={p.name}>{p.name}</div>
-                        {p.description && (
-                          <span className="spec-chip">
-                            {p.description.substring(0, 60)}...
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ marginTop: '12px' }}>
-                        <div className="prod-price">
-                          <span className="price-now">₹{p.price?.toLocaleString('en-IN')}</span>
-                        </div>
-                        <button
-                          className="btn btn-gold"
-                          style={{ width: '100%', marginTop: '10px', justifyContent: 'center', padding: '8px 12px', fontSize: '11px' }}
-                          disabled={isOutOfStock}
-                          onClick={() => addToCart(p.id, 1)}
-                        >
-                          <ShoppingCart size={14} />
-                          <span>{isOutOfStock ? 'Out of Stock' : 'Add to Cart'}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {products.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
             </div>
           )}
 

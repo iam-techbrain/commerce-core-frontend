@@ -9,7 +9,9 @@ import Layout from './components/common/Layout';
 import HomePage from './pages/customer/HomePage';
 import CategoriesPage from './pages/CategoriesPage';
 import ProductsPage from './pages/ProductsPage';
+import ProductDetailPage from './pages/ProductDetailPage';
 import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 
@@ -24,6 +26,7 @@ import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 
 import ProtectedRoute from './components/common/ProtectedRoute';
 import CartDrawer from './components/cart/CartDrawer';
+import Preloader from './components/common/Preloader';
 import './styles/main.css';
 
 function App() {
@@ -31,13 +34,18 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <WishlistProvider>
+          {/* Smooth Brand Preloader Screen */}
+          <Preloader />
           <Router>
             <Routes>
               {/* 🛍️ Customer Routes (Wrapped in Customer Layout) */}
               <Route path="/" element={<Layout><HomePage /></Layout>} />
               <Route path="/categories" element={<Layout><CategoriesPage /></Layout>} />
               <Route path="/products" element={<Layout><ProductsPage /></Layout>} />
+              <Route path="/product/:id" element={<Layout><ProductDetailPage /></Layout>} />
+              <Route path="/products/:id" element={<Layout><ProductDetailPage /></Layout>} />
               <Route path="/about" element={<Layout><AboutPage /></Layout>} />
+              <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
               <Route path="/login" element={<Layout><LoginPage /></Layout>} />
               <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
               <Route path="/wishlist" element={<Layout><ProfilePage /></Layout>} />

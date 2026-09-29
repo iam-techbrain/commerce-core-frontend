@@ -88,6 +88,12 @@ const CustomerHeader = () => {
               </NavLink>
             </div>
 
+            <div className="nav-item">
+              <NavLink to="/contact" className={({ isActive }) => (isActive ? 'active' : '')}>
+                Contact
+              </NavLink>
+            </div>
+
             {/* 👑 ADMIN CONSOLE LINK (Shown only for Admin users) */}
             {isAdmin && (
               <div className="nav-item">
@@ -124,10 +130,20 @@ const CustomerHeader = () => {
             </button>
 
             {/* Cart Chip */}
-            <button className="cart-chip" onClick={() => setIsDrawerOpen(true)} title="View Cart">
+            <button
+              className="icon-btn"
+              aria-label="Wishlist"
+              onClick={() => setIsDrawerOpen(true)} title="View Cart"
+            >
+              <ShoppingBag size={20} />
+              {cartCount > 0 && <span className="badge">{cartCount}</span>}
+            </button>
+
+            {/* Cart Chip */}
+            {/* <button className="cart-chip" onClick={() => setIsDrawerOpen(true)} title="View Cart">
               <ShoppingBag size={16} />
               <span>CART</span> ({cartCount})
-            </button>
+            </button> */}
 
             {/* USER LOGIN / PROFILE AREA */}
             {user ? (

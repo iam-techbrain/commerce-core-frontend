@@ -1,10 +1,12 @@
 import React, { useContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CartContext } from '../../context/CartContext';
 import { WishlistContext } from '../../context/WishlistContext';
-import { ShoppingCart, Heart, Layers, X, Check } from 'lucide-react';
-import { getImageUrl } from '../../utils/image.util';
+import { ShoppingCart, Heart, Layers, X, Check, Eye } from 'lucide-react';
+import { getImageUrl, parseProductImages } from '../../utils/image.util';
 
 const ProductCard = ({ product }) => {
+  const navigate = useNavigate();
   const { addToCart } = useContext(CartContext);
   const { isInWishlist, toggleWishlist } = useContext(WishlistContext);
 
@@ -13,12 +15,26 @@ const ProductCard = ({ product }) => {
     product.variants && product.variants.length > 0 ? product.variants[0] : null
   );
 
-  const activeImage = getImageUrl(selectedVariant?.imageUrl || product.imageUrl);
+  // Safe Multi-Image Extraction
+  const allImages = parseProductImages(product);
+
+  const primaryImage = selectedVariant?.imageUrl
+    ? getImageUrl(selectedVariant.imageUrl)
+    : allImages[0];
+
+  const secondaryImage = allImages.length > 1 && allImages[1] !== primaryImage
+    ? allImages[1]
+    : null;
 
   const isOutOfStock = product.stock <= 0;
   const wishlisted = isInWishlist(product.id);
 
-  const handleCardButtonClick = () => {
+  const handleNavToDetail = () => {
+    navigate(`/product/${product.id}`);
+  };
+
+  const handleCardButtonClick = (e) => {
+    e.stopPropagation();
     if (product.hasVariants && product.variants?.length > 0) {
       setShowVariantModal(true);
     } else {
@@ -36,12 +52,13 @@ const ProductCard = ({ product }) => {
   const currentPrice = selectedVariant ? selectedVariant.price : product.price;
   const currentMrp = selectedVariant ? (selectedVariant.mrp || product.mrp) : product.mrp;
   const currentStock = selectedVariant ? selectedVariant.stock : product.stock;
-  const variantOutOfStock = currentStock <= 0;
 
   return (
     <>
-      <div className="prod-card">
-        <div className="prod-media">
+      <div className="prod-card" style={{ cursor: 'pointer' }}>
+        
+        {/* MEDIA CONTAINER */}
+        <div className="prod-media" onClick={handleNavToDetail}>
           <span
             className="prod-tag"
             style={{ background: isOutOfStock ? 'var(--oxblood)' : 'var(--pitch)' }}
@@ -62,17 +79,29 @@ const ProductCard = ({ product }) => {
             <Heart size={16} fill={wishlisted ? 'var(--oxblood)' : 'none'} color={wishlisted ? 'var(--oxblood)' : 'var(--ink)'} />
           </button>
 
-          <img src={activeImage} alt={product.name} />
+          {/* Render 2 images if secondary exists, else single image that never turns white */}
+          {secondaryImage ? (
+            <>
+              <img src={primaryImage} alt={product.name} className="primary" />
+              <img src={secondaryImage} alt={`${product.name} alternate view`} className="secondary" />
+            </>
+          ) : (
+            <img src={primaryImage} alt={product.name} className="single-img" />
+          )}
         </div>
 
+        {/* INFO CONTAINER */}
         <div className="prod-info">
           <div>
             <div className="prod-brand">
               {product.brand?.name || product.brandName || product.category?.name || 'Chhabra Sports'}
             </div>
-            <h4 className="prod-name" title={product.name}>{product.name}</h4>
+            <h4 className="prod-name" title={product.name} onClick={handleNavToDetail}>
+              {product.name}
+            </h4>
             {product.description && (
               <p
+                onClick={handleNavToDetail}
                 style={{
                   fontSize: '0.78rem',
                   color: 'var(--ink-soft)',

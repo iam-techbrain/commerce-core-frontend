@@ -39,9 +39,9 @@ const CustomerFooter = () => {
 
           <div className="foot-col">
             <h5>Customer Service</h5>
+            <NavLink to="/contact">Contact Us & Support</NavLink>
             <a href="tel:+917277252440">Phone: +91-72772-52440</a>
             <a href="mailto:chhabrasportspatna@outlook.com">Email: chhabrasportspatna@outlook.com</a>
-            <a href="#stringing">Stringing Service</a>
             <NavLink to="/profile">Track Order</NavLink>
           </div>
 
