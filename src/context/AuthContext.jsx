@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         localStorage.setItem('userToken', token);
         setUser(attachGenderAndAvatar(userData));
+        window.dispatchEvent(new Event('storage'));
       }
     }
     return res.data;
@@ -81,6 +82,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('userToken');
     setUser(null);
+    window.dispatchEvent(new Event('storage'));
   };
 
   return (

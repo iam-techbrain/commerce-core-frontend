@@ -4,6 +4,7 @@ import { CartContext } from '../../context/CartContext';
 import { AuthContext } from '../../context/AuthContext';
 import CheckoutModal from './CheckoutModal';
 import { X, ArrowRight } from 'lucide-react';
+import { getImageUrl } from '../../utils/image.util';
 
 const CartDrawer = () => {
   const { cartItems, subtotal, isDrawerOpen, setIsDrawerOpen, updateQuantity, removeItem } = useContext(CartContext);
@@ -70,9 +71,7 @@ const CartDrawer = () => {
             </div>
           ) : (
             cartItems.map((item) => {
-              const imageSrc = item.productImage 
-                ? (item.productImage.startsWith('http') ? item.productImage : `${item.productImage}`) 
-                : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200';
+              const imageSrc = getImageUrl(item.productImage, 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200');
 
               return (
                 <div className="cart-item" key={item.id}>

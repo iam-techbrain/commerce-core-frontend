@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useParams, useNavigate, NavLink } from 'react-router-dom';
+import API from '../api/axios';
 import { CartContext } from '../context/CartContext';
 import { WishlistContext } from '../context/WishlistContext';
 import { getImageUrl, parseProductImages } from '../utils/image.util';
@@ -40,13 +41,10 @@ const ProductDetailPage = () => {
   useEffect(() => {
     // Fetch product details from backend API
     setLoading(true);
-    fetch(`http://localhost:5000/api/products/${id}`)
+    API.get(`/products/${id}`)
       .then((res) => {
-        if (!res.ok) throw new Error('Product not found');
-        return res.json();
-      })
-      .then((data) => {
-        const prodData = data.data || data;
+        const prodData = res.data?.data || res.data;
+        if (!prodData) throw new Error('Product not found');
         setProduct(prodData);
 
         // Extract images
@@ -60,10 +58,9 @@ const ProductDetailPage = () => {
 
         // Fetch related products (same category or all products)
         const catQuery = prodData.categoryId ? `?categoryId=${prodData.categoryId}` : '';
-        fetch(`http://localhost:5000/api/products${catQuery}`)
-          .then((res) => res.json())
-          .then((relData) => {
-            const list = relData.data || relData || [];
+        API.get(`/products${catQuery}`)
+          .then((relRes) => {
+            const list = relRes.data?.data || relRes.data || [];
             const filtered = list.filter((p) => String(p.id) !== String(id)).slice(0, 4);
             setRelatedProducts(filtered);
           })
@@ -128,15 +125,14 @@ const ProductDetailPage = () => {
 
   const handleAddToCart = () => {
     if (isOutOfStock) return;
-    addToCart(product.id, quantity, selectedVariant?.id);
+    addToCart(product.id, quantity, selectedVariant?.id, product);
     setAddedToast(true);
     setTimeout(() => setAddedToast(false), 2500);
   };
 
   const handleBuyNow = () => {
     if (isOutOfStock) return;
-    addToCart(product.id, quantity, selectedVariant?.id);
-    navigate('/profile?tab=cart');
+    addToCart(product.id, quantity, selectedVariant?.id, product);
   };
 
   // Mock specs

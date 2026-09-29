@@ -38,13 +38,13 @@ const ProductCard = ({ product }) => {
     if (product.hasVariants && product.variants?.length > 0) {
       setShowVariantModal(true);
     } else {
-      addToCart(product.id, 1);
+      addToCart(product.id, 1, null, product);
     }
   };
 
   const handleAddSelectedVariantToCart = () => {
     if (!selectedVariant) return;
-    addToCart(product.id, 1, selectedVariant.id);
+    addToCart(product.id, 1, selectedVariant.id, product);
     setShowVariantModal(false);
   };
 

@@ -2,7 +2,10 @@ export const getApiHost = () => {
   if (import.meta.env.VITE_API_HOST) {
     return import.meta.env.VITE_API_HOST;
   }
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+  if (typeof window !== 'undefined') {
+    if (!window.location.port || window.location.port === '80' || window.location.port === '443') {
+      return '';
+    }
     return `${window.location.protocol}//${window.location.hostname}:5000`;
   }
   return 'http://localhost:5000';
