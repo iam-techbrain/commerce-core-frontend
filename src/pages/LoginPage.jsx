@@ -207,52 +207,81 @@ const LoginPage = () => {
         </form>
 
         {/* Demo Fast Login Buttons */}
+        {/* Demo Fast Login Buttons */}
         {isLoginTab && (
-          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
-            <span className="eyebrow" style={{ display: 'block', textAlign: 'center', marginBottom: '10px' }}>
-              Quick Demo Access
-            </span>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                type="button"
-                className="btn btn-outline"
-                style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
-                onClick={() => fillCredentials('admin@gmail.com', '123456')}
-              >
-                👤 Admin User (Admin)
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline"
-                style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
-                onClick={() => fillCredentials('ajay@gmail.com', '123456')}
-              >
-                🛍️ Ajay Yadav (Customer)
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline"
-                style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
-                onClick={() => fillCredentials('katrina@gmail.com', '123456')}
-              >
-                🛍️ Katrina Kaif (Customer)
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline"
-                style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
-                onClick={() => fillCredentials('rohan@gmail.com', '123456')}
-              >
-                🛍️ Rohan Verma (Customer)
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline"
-                style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
-                onClick={() => fillCredentials('ananya@gmail.com', '123456')}
-              >
-                🛍️ Ananya Gupta (Customer)
-              </button>
+          <div style={{ marginTop: '24px', paddingTop: '18px', borderTop: '1px solid var(--line)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <span className="eyebrow" style={{ fontSize: '11px', letterSpacing: '1px', color: 'var(--ink-soft)' }}>
+                ⚡ Quick Demo Access
+              </span>
+              <span style={{ fontSize: '11px', color: 'var(--ink-soft)', fontFamily: 'monospace' }}>
+                Click to Auto-Fill
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {[
+                { name: 'Admin User', role: 'ADMIN', email: 'admin@gmail.com', pass: '123456', icon: '🛡️', isAdmin: true },
+                { name: 'Ajay Yadav', role: 'CUSTOMER', email: 'ajay@gmail.com', pass: '123456', icon: '🏸' },
+                { name: 'Katrina Kaif', role: 'CUSTOMER', email: 'katrina@gmail.com', pass: '123456', icon: '🎾' },
+                { name: 'Rohan Verma', role: 'CUSTOMER', email: 'rohan@gmail.com', pass: '123456', icon: '🏏' },
+                { name: 'Ananya Gupta', role: 'CUSTOMER', email: 'ananya@gmail.com', pass: '123456', icon: '🏃‍♀️' }
+              ].map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  onClick={() => fillCredentials(acc.email, acc.pass)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: acc.isAdmin ? '#131815' : '#1c221e',
+                    border: acc.isAdmin ? '1px solid rgba(212, 155, 58, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    color: '#f4f5f3',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = acc.isAdmin ? '#19201b' : '#252d27';
+                    e.currentTarget.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = acc.isAdmin ? '#131815' : '#1c221e';
+                    e.currentTarget.style.transform = 'none';
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '16px' }}>{acc.icon}</span>
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', letterSpacing: '-0.01em' }}>
+                        {acc.name}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#9aa59e', fontFamily: 'monospace' }}>
+                        {acc.email}
+                      </div>
+                    </div>
+                  </div>
+
+                  <span
+                    style={{
+                      fontSize: '10px',
+                      fontWeight: 800,
+                      letterSpacing: '0.6px',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      background: acc.isAdmin ? 'rgba(212, 155, 58, 0.2)' : 'rgba(255, 255, 255, 0.07)',
+                      color: acc.isAdmin ? 'var(--gold)' : '#c0cbc4',
+                      border: acc.isAdmin ? '1px solid rgba(212, 155, 58, 0.35)' : '1px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                  >
+                    {acc.role}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         )}
