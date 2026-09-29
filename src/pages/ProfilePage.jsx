@@ -4,6 +4,7 @@ import API from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
 import { WishlistContext } from '../context/WishlistContext';
+import ProfileAvatar from '../components/common/ProfileAvatar';
 import {
   User,
   MapPin,
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react';
 
 const ProfilePage = () => {
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, updateGender, updateAvatar } = useContext(AuthContext);
   const { addToCart } = useContext(CartContext);
   const { wishlistItems, toggleWishlist, fetchWishlist } = useContext(WishlistContext);
   const navigate = useNavigate();
@@ -135,28 +136,128 @@ const ProfilePage = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '32px' }}>
         {/* Profile Sidebar */}
         <div className="profile-card" style={{ height: 'fit-content' }}>
-          <div
-            style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              background: 'var(--pitch)',
-              color: 'var(--gold)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '24px',
-              fontWeight: 800,
-              fontFamily: 'Outfit, sans-serif',
-              marginBottom: '16px'
-            }}
-          >
-            {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
+          <div style={{ marginBottom: '16px' }}>
+            <ProfileAvatar user={user} size={76} />
           </div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '4px', color: 'var(--pitch)' }}>
             {user.username}
           </h2>
           <p style={{ color: 'var(--ink-soft)', fontSize: '0.85rem', marginBottom: '14px' }}>{user.email}</p>
+
+          {/* Gender / Avatar Selection */}
+          <div
+            style={{
+              background: 'var(--parchment)',
+              padding: '12px 14px',
+              borderRadius: '8px',
+              border: '1px solid var(--line)',
+              marginBottom: '16px'
+            }}
+          >
+            <label
+              style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                color: 'var(--pitch)',
+                display: 'block',
+                marginBottom: '8px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}
+            >
+              Profile Avatar / Gender
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => updateGender('male')}
+                style={{
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  border: (user.gender || 'male') === 'male' ? '1.5px solid var(--pitch)' : '1px solid var(--line)',
+                  background: (user.gender || 'male') === 'male' ? 'var(--pitch)' : 'var(--white)',
+                  color: (user.gender || 'male') === 'male' ? '#ffffff' : 'var(--ink)',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <span>👨 Male</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateGender('female')}
+                style={{
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  border: user.gender === 'female' ? '1.5px solid #8F2B3B' : '1px solid var(--line)',
+                  background: user.gender === 'female' ? '#8F2B3B' : 'var(--white)',
+                  color: user.gender === 'female' ? '#ffffff' : 'var(--ink)',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <span>👩 Female</span>
+              </button>
+            </div>
+
+            {/* Custom Avatar Link */}
+            <div style={{ marginTop: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase' }}>
+                  Custom Photo URL
+                </span>
+                {user.avatar && (
+                  <button
+                    type="button"
+                    onClick={() => updateAvatar(null)}
+                    style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: '10px', cursor: 'pointer', padding: 0, fontWeight: 700 }}
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+              <input
+                type="url"
+                placeholder="Paste photo link (HTTPS)..."
+                defaultValue={user.avatar || ''}
+                key={user.avatar || 'empty'}
+                onBlur={(e) => {
+                  const val = e.target.value.trim();
+                  if (val !== (user.avatar || '')) {
+                    updateAvatar(val || null);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const val = e.target.value.trim();
+                    updateAvatar(val || null);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--line)',
+                  fontSize: '11px',
+                  background: 'var(--white)',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </div>
 
           <span
             style={{

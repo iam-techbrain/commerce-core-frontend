@@ -1,6 +1,7 @@
 import React from 'react';
 import CustomerHeader from './CustomerHeader';
 import CustomerFooter from './CustomerFooter';
+import FloatingSocialBar from './FloatingSocialBar';
 
 const CustomerLayout = ({ children }) => {
   return (
@@ -9,6 +10,7 @@ const CustomerLayout = ({ children }) => {
       <main style={{ flex: 1 }}>
         {children}
       </main>
+      <FloatingSocialBar />
       <CustomerFooter />
     </div>
   );

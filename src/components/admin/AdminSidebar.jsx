@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Shield,
   Sparkles,
-  Settings
+  Settings,
+  Users
 } from 'lucide-react';
 
 const AdminSidebar = ({ collapsed, mobileOpen, onCloseMobile }) => {
@@ -114,6 +115,21 @@ const AdminSidebar = ({ collapsed, mobileOpen, onCloseMobile }) => {
           </span>
         </NavLink>
 
+        {/* Section: USERS & CUSTOMERS */}
+        <div className="admin-sidebar-heading">Users & Community</div>
+
+        <NavLink
+          to="/admin/users"
+          className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          title="Users & Gender Management"
+        >
+          <div className="admin-nav-item-inner">
+            <Users size={19} />
+            <span>Users</span>
+          </div>
+          <ChevronRight size={14} className="admin-nav-arrow" style={{ opacity: 0.6 }} />
+        </NavLink>
+
         {/* Section: SYSTEM & PREFERENCES */}
         <div className="admin-sidebar-heading">System & Config</div>
 
@@ -127,21 +143,6 @@ const AdminSidebar = ({ collapsed, mobileOpen, onCloseMobile }) => {
             <span>Settings</span>
           </div>
           <ChevronRight size={14} className="admin-nav-arrow" style={{ opacity: 0.6 }} />
-        </NavLink>
-
-        {/* Section: STOREFRONT SHORTCUT */}
-        <div className="admin-sidebar-heading">Storefront</div>
-
-        <NavLink
-          to="/"
-          className="admin-nav-item"
-          title="View Customer Store"
-          style={{ color: 'rgba(255, 255, 255, 0.75)' }}
-        >
-          <div className="admin-nav-item-inner">
-            <ExternalLink size={19} />
-            <span>Live Customer Store</span>
-          </div>
         </NavLink>
       </nav>
 

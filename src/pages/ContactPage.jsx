@@ -55,12 +55,57 @@ const ContactPage = () => {
 
   const faqs = [
     {
+      q: 'How can I contact customer support or place an order via WhatsApp?',
+      a: (
+        <span>
+          You can connect with us directly on WhatsApp at{' '}
+          <a
+            href="https://wa.me/917277252440"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#25D366', fontWeight: 700, textDecoration: 'underline' }}
+          >
+            +91 72772 52440 (Click to Chat)
+          </a>
+          . Our specialists assist with stock availability, custom stringing requests, bat knocking inquiries, and instant order tracking.
+        </span>
+      )
+    },
+    {
+      q: 'Where can I follow Chhabra Sports on Instagram and Facebook?',
+      a: (
+        <span>
+          Follow our official social profiles to get the latest updates on fresh stock, player reviews, and exclusive tournament discounts:
+          <br />
+          • Instagram:{' '}
+          <a
+            href="https://www.instagram.com/chhabrasportsagencies/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#E1306C', fontWeight: 700, textDecoration: 'underline' }}
+          >
+            @chhabrasportsagencies
+          </a>
+          <br />
+          • Facebook:{' '}
+          <a
+            href="https://www.facebook.com/chhabrasports/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#1877F2', fontWeight: 700, textDecoration: 'underline' }}
+          >
+            facebook.com/chhabrasports
+          </a>
+        </span>
+      )
+    },
+    {
       q: 'Are all products sold on Chhabra Sports 100% genuine?',
       a: 'Yes, absolutely. We are authorized dealers for Yonex, Li-Ning, Victor, Babolat, Head, Cosco, and SG. Every product comes with standard manufacturer warranty and authenticity verification codes.'
     },
     {
-      q: 'Do you offer custom racquet stringing?',
-      a: 'Yes! We have professional electronic gutting machines and experienced stringers. You can select your preferred string type (e.g. Yonex BG65, BG80, Nanogy 95) and tension (lbs) when ordering or contacting us.'
+      q: 'Do you offer custom racquet stringing & bat knocking?',
+      a: 'Yes! We have professional electronic gutting machines and experienced master stringers (22-30 lbs) as well as machine & linseed oil bat knocking for English Willow bats.'
     },
     {
       q: 'What are the delivery timelines across India?',
@@ -602,10 +647,10 @@ const ContactPage = () => {
                   <Award size={20} color="var(--gold)" style={{ flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--white)' }}>
-                      25+ Years Legacy
+                      Estd. 1948 • 75+ Years Legacy
                     </h4>
                     <p style={{ fontSize: '12.5px', color: 'var(--parchment-dim)', margin: 0 }}>
-                      Serving state & national level players across India since 1998.
+                      Serving state & national level players across India since 1948.
                     </p>
                   </div>
                 </div>

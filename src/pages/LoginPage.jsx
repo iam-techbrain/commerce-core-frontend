@@ -11,7 +11,8 @@ const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('CUSTOMER');
+  const [phone, setPhone] = useState('');
+  const [gender, setGender] = useState('male');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -45,9 +46,21 @@ const LoginPage = () => {
           setError(res.message || 'Login failed!');
         }
       } else {
-        const res = await register(username, email, password, role);
+        // Registration Mandatory Validations
+        if (!phone.trim()) {
+          setError('Mobile Number is mandatory (zaroori) for registration!');
+          setLoading(false);
+          return;
+        }
+        if (!gender) {
+          setError('Please select your gender (Male / Female)!');
+          setLoading(false);
+          return;
+        }
+
+        const res = await register(username, email, password, 'CUSTOMER', gender, phone.trim());
         if (res.success) {
-          alert(`Registration successful as ${role}! Please login.`);
+          alert('Registration successful! Please sign in.');
           setIsLoginTab(true);
         } else {
           setError(res.message || 'Registration failed!');
@@ -94,23 +107,72 @@ const LoginPage = () => {
                   type="text"
                   required
                   className="form-control"
-                  placeholder="john_doe"
+                  placeholder="Enter Your Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
 
+              {/* Mobile Number */}
               <div className="form-group">
-                <label>Account Type (Role)</label>
-                <select
+                <label>Mobile Number *</label>
+                <input
+                  type="tel"
+                  required
                   className="form-control"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  style={{ background: 'var(--white)', color: 'var(--ink)' }}
-                >
-                  <option value="CUSTOMER">🛍️ Customer / Buyer</option>
-                  <option value="ADMIN">👑 Admin / Store Owner</option>
-                </select>
+                  placeholder="Enter Your Mobile Number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+
+              {/* Simple Clean Gender Selection */}
+              <div className="form-group">
+                <label>Gender *</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '4px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setGender('male')}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: gender === 'male' ? '2px solid var(--pitch)' : '1px solid var(--line)',
+                      background: gender === 'male' ? 'var(--pitch)' : 'var(--white)',
+                      color: gender === 'male' ? '#ffffff' : 'var(--ink)',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span>👨 Male</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGender('female')}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      border: gender === 'female' ? '2px solid #8F2B3B' : '1px solid var(--line)',
+                      background: gender === 'female' ? '#8F2B3B' : 'var(--white)',
+                      color: gender === 'female' ? '#ffffff' : 'var(--ink)',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span>👩 Female</span>
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -121,7 +183,7 @@ const LoginPage = () => {
               type="email"
               required
               className="form-control"
-              placeholder="afzal@schooldigitalised.com"
+              placeholder="Enter Your Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -155,17 +217,41 @@ const LoginPage = () => {
                 type="button"
                 className="btn btn-outline"
                 style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
-                onClick={() => fillCredentials('afzal@schooldigitalised.com', 'password123')}
+                onClick={() => fillCredentials('admin@gmail.com', '123456')}
               >
-                👤 Afzal (Admin)
+                👤 Admin User (Admin)
               </button>
               <button
                 type="button"
                 className="btn btn-outline"
                 style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
-                onClick={() => fillCredentials('rahul@gmail.com', 'password123')}
+                onClick={() => fillCredentials('ajay@gmail.com', '123456')}
               >
-                🛍️ Rahul (Customer)
+                🛍️ Ajay Yadav (Customer)
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
+                onClick={() => fillCredentials('katrina@gmail.com', '123456')}
+              >
+                🛍️ Katrina Kaif (Customer)
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
+                onClick={() => fillCredentials('rohan@gmail.com', '123456')}
+              >
+                🛍️ Rohan Verma (Customer)
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ flex: 1, padding: '8px', fontSize: '10.5px', justifyContent: 'center', color: 'var(--pitch)', borderColor: 'var(--line)', background: 'var(--parchment)' }}
+                onClick={() => fillCredentials('ananya@gmail.com', '123456')}
+              >
+                🛍️ Ananya Gupta (Customer)
               </button>
             </div>
           </div>

@@ -5,42 +5,44 @@ import { CartContext } from '../../context/CartContext';
 import { WishlistContext } from '../../context/WishlistContext';
 import ProductCard from '../../components/product/ProductCard';
 import Pagination from '../../components/common/Pagination';
+import ReviewsSlider from '../../components/customer/ReviewsSlider';
+import { getImageUrl, getCategoryFallbackImage } from '../../utils/image.util';
 
 const fallbackCategories = [
   {
     id: 1,
-    name: 'Badminton & Racquets',
-    imageUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500&q=80&auto=format&fit=crop'
+    name: 'Badminton',
+    imageUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=700&q=80&auto=format&fit=crop'
   },
   {
     id: 2,
-    name: 'Tennis Racquets & Gear',
-    imageUrl: 'https://images.unsplash.com/photo-1595435742656-5272d0b3fa82?w=500&q=80&auto=format&fit=crop'
+    name: 'Cricket',
+    imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=700&q=80&auto=format&fit=crop'
   },
   {
     id: 3,
-    name: 'Cricket Bats & Gear',
-    imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=500&q=80&auto=format&fit=crop'
+    name: 'Lawn Tennis',
+    imageUrl: 'https://images.unsplash.com/photo-1595435742656-5272d0b3fa82?w=700&q=80&auto=format&fit=crop'
   },
   {
     id: 4,
-    name: 'Non-Marking Court Shoes',
-    imageUrl: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80&auto=format&fit=crop'
+    name: 'Pickleball',
+    imageUrl: 'https://images.unsplash.com/photo-1599586120429-48281b6f0ece?w=700&q=80&auto=format&fit=crop'
   },
   {
     id: 5,
-    name: 'Football & Boots',
-    imageUrl: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=500&q=80&auto=format&fit=crop'
+    name: 'Fitness',
+    imageUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=700&q=80&auto=format&fit=crop'
   },
   {
     id: 6,
-    name: 'Gym & Fitness Gear',
-    imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&q=80&auto=format&fit=crop'
+    name: 'Clothing',
+    imageUrl: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=700&q=80&auto=format&fit=crop'
   },
   {
     id: 7,
-    name: 'Strings & Accessories',
-    imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500&q=80&auto=format&fit=crop'
+    name: 'General Sports',
+    imageUrl: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=700&q=80&auto=format&fit=crop'
   }
 ];
 
@@ -118,7 +120,7 @@ const HomePage = () => {
           <span className="eyebrow display">India's Preferred Online Racquet & Sports Store</span>
           <h1>Play Hard.<br /><em>Perform</em> <span className="highlight">Better.</span></h1>
           <p>
-            Authentic Yonex, Head, Babolat & Li-Ning racquets, SS English Willow cricket bats, tournament shoes and certified stringing — trusted by athletes across India since 1998.
+            Authentic Yonex, Head, Babolat & Li-Ning racquets, SS English Willow cricket bats, tournament shoes and certified stringing — trusted by athletes across India since 1948 (75+ Years Heritage).
           </p>
           <div className="hero-ctas">
             <a
@@ -165,13 +167,13 @@ const HomePage = () => {
       {/* 2. SCOREBOARD TICKER */}
       <div className="scoreboard">
         <div className="scoreboard-track">
-          <div className="score-item"><span className="num">25+</span><span className="lbl">Years in Sport</span></div>
+          <div className="score-item"><span className="num">75+</span><span className="lbl">Years in Sport (Estd. 1948)</span></div>
           <div className="score-item"><span className="num">12,000+</span><span className="lbl">Products Stocked</span></div>
           <div className="score-item"><span className="num">100%</span><span className="lbl">Genuine Warranty</span></div>
           <div className="score-item"><span className="num">500+</span><span className="lbl">Academies Equipped</span></div>
           <div className="score-item"><span className="num">60 MIN</span><span className="lbl">Pro Stringing Service</span></div>
           <div className="score-item"><span className="num">4.8/5</span><span className="lbl">Rated by Players</span></div>
-          <div className="score-item"><span className="num">25+</span><span className="lbl">Years in Sport</span></div>
+          <div className="score-item"><span className="num">75+</span><span className="lbl">Years in Sport (Estd. 1948)</span></div>
           <div className="score-item"><span className="num">12,000+</span><span className="lbl">Products Stocked</span></div>
           <div className="score-item"><span className="num">100%</span><span className="lbl">Genuine Warranty</span></div>
           <div className="score-item"><span className="num">500+</span><span className="lbl">Academies Equipped</span></div>
@@ -236,18 +238,52 @@ const HomePage = () => {
               <h2>Shop by Sport & Category</h2>
             </div>
             <button
-              className="sec-link"
               onClick={() => navigate('/categories')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'var(--pitch, #11362B)',
+                color: '#ffffff',
+                border: '1.5px solid var(--pitch, #11362B)',
+                padding: '9px 20px',
+                borderRadius: '30px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(17, 54, 43, 0.15)',
+                transition: 'all 0.25s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--gold, #D49B3A)';
+                e.currentTarget.style.borderColor = 'var(--gold, #D49B3A)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--pitch, #11362B)';
+                e.currentTarget.style.borderColor = 'var(--pitch, #11362B)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
-              View All Categories ({categories.length}) →
+              <span>View All Categories</span>
+              <span
+                style={{
+                  background: 'rgba(255, 255, 255, 0.22)',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  fontSize: '11px',
+                  fontWeight: 800
+                }}
+              >
+                {categories.length}
+              </span>
+              <span style={{ fontSize: '15px', lineHeight: 1 }}>→</span>
             </button>
           </div>
 
           <div className="cat-grid">
             {categories.slice(0, 8).map((cat) => {
-              const imageSrc = cat.imageUrl
-                ? (cat.imageUrl.startsWith('http') ? cat.imageUrl : `${cat.imageUrl}`)
-                : 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500';
+              const imageSrc = getImageUrl(cat.imageUrl, null, cat.name);
 
               return (
                 <div
@@ -549,49 +585,8 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* 11. PLAYER TESTIMONIALS */}
-      <section className="section">
-        <div className="wrap">
-          <div className="sec-head">
-            <div>
-              <span className="eyebrow">Player Reviews</span>
-              <h2>Verified Reviews from Players</h2>
-            </div>
-          </div>
-          <div className="testi-grid">
-            <div className="testi-card">
-              <div className="stars">★★★★★</div>
-              <p>"Ordered a Head Speed MP tennis racquet — serial code verified on the official site! The string tension requested was spot on."</p>
-              <div className="testi-who">
-                <div>
-                  <div className="testi-name">Vikramaditya Roy</div>
-                  <div className="testi-prod">Head Speed MP Tennis Racquet</div>
-                </div>
-              </div>
-            </div>
-            <div className="testi-card">
-              <div className="stars">★★★★★</div>
-              <p>"Got my Yonex Astrox racquet strung with BG65 at 26lbs. Exceptional stringing quality and super quick delivery to Bangalore."</p>
-              <div className="testi-who">
-                <div>
-                  <div className="testi-name">Ananya Sharma</div>
-                  <div className="testi-prod">Yonex Astrox 88D Pro</div>
-                </div>
-              </div>
-            </div>
-            <div className="testi-card">
-              <div className="stars">★★★★☆</div>
-              <p>"SS Ton English willow bat arrived oiled and pre-knocked. Grain line was straight and balance was perfect for my stance."</p>
-              <div className="testi-who">
-                <div>
-                  <div className="testi-name">Rohit Malhotra</div>
-                  <div className="testi-prod">SS Ton Reserve Willow Bat</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* 11. PLAYER TESTIMONIALS SLIDER */}
+      <ReviewsSlider />
 
       {/* 12. NEWSLETTER */}
       <section className="newsletter">

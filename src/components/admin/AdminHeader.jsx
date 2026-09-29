@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import {
   Menu,
-  Search,
   Bell,
   Mail,
   ListTodo,
@@ -18,7 +17,7 @@ const AdminHeader = ({ onToggleSidebar }) => {
 
   return (
     <header className="admin-topbar">
-      {/* Left: Hamburger Toggle & Search Bar */}
+      {/* Left: Hamburger Toggle */}
       <div className="admin-topbar-left">
         <button
           className="admin-toggle-btn"
@@ -28,15 +27,6 @@ const AdminHeader = ({ onToggleSidebar }) => {
         >
           <Menu size={20} />
         </button>
-
-        <div className="admin-search-wrapper">
-          <Search size={16} className="admin-search-icon" />
-          <input
-            type="text"
-            className="admin-search-input"
-            placeholder="Search products, orders, SKU..."
-          />
-        </div>
       </div>
 
       {/* Right: Notifications, Storefront Shortcut & User Profile */}
