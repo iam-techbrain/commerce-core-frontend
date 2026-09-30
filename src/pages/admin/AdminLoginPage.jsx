@@ -147,7 +147,7 @@ const AdminLoginPage = () => {
               className="form-control"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="afzal@schooldigitalised.com"
+              placeholder="Enter Your Email"
             />
           </div>
 
@@ -181,22 +181,6 @@ const AdminLoginPage = () => {
             <ArrowRight size={16} />
           </button>
         </form>
-
-        {/* Quick 1-Click Access Badge */}
-        <div
-          style={{
-            marginTop: '24px',
-            padding: '12px 16px',
-            background: 'var(--parchment)',
-            border: '1px solid var(--line)',
-            borderRadius: '6px',
-            textAlign: 'center'
-          }}
-        >
-          <span style={{ fontSize: '11px', color: 'var(--ink-soft)', fontFamily: 'Space Mono, monospace' }}>
-            DEMO ADMIN: <strong>afzal@schooldigitalised.com</strong> / <strong>password123</strong>
-          </span>
-        </div>
 
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
           <button
