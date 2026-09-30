@@ -92,11 +92,11 @@ const ProductCard = ({ product }) => {
           {/* Render 2 images if secondary exists, else single image that never turns white */}
           {secondaryImage ? (
             <>
-              <img src={primaryImage} alt={product.name} className="primary" />
-              <img src={secondaryImage} alt={`${product.name} alternate view`} className="secondary" />
+              <img src={primaryImage} alt={product.name} className="primary" loading="lazy" decoding="async" />
+              <img src={secondaryImage} alt={`${product.name} alternate view`} className="secondary" loading="lazy" decoding="async" />
             </>
           ) : (
-            <img src={primaryImage} alt={product.name} className="single-img" />
+            <img src={primaryImage} alt={product.name} className="single-img" loading="lazy" decoding="async" />
           )}
         </div>
 

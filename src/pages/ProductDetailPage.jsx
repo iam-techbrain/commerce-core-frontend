@@ -277,6 +277,8 @@ const ProductDetailPage = () => {
               <img
                 src={selectedImage || getImageUrl(allImages[0])}
                 alt={product.name}
+                decoding="async"
+                fetchPriority="high"
                 style={{
                   width: '100%',
                   height: '100%',
@@ -310,7 +312,7 @@ const ProductDetailPage = () => {
                         transition: 'all 0.2s'
                       }}
                     >
-                      <img src={imgUrl} alt={`Thumbnail ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={imgUrl} alt={`Thumbnail ${index + 1}`} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </button>
                   );
                 })}
