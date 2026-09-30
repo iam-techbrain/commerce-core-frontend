@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useParams, useNavigate, NavLink } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import API from '../api/axios';
 import { CartContext } from '../context/CartContext';
 import { WishlistContext } from '../context/WishlistContext';
@@ -29,7 +30,6 @@ const ProductDetailPage = () => {
 
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
@@ -38,47 +38,55 @@ const ProductDetailPage = () => {
   const [activeTab, setActiveTab] = useState('description');
   const [addedToast, setAddedToast] = useState(false);
 
+  // TanStack Query: Fetch Product by ID
+  const { data: productData, isLoading: loading } = useQuery({
+    queryKey: ['product', id],
+    queryFn: async () => {
+      const res = await API.get(`/products/${id}`);
+      const prodData = res.data?.data || res.data;
+      if (!prodData) throw new Error('Product not found');
+      return prodData;
+    }
+  });
+
+  // TanStack Query: Related products
+  const { data: relatedList = [] } = useQuery({
+    queryKey: ['related-products', productData?.categoryId, id],
+    queryFn: async () => {
+      if (!productData?.categoryId) return [];
+      const res = await API.get(`/products?categoryId=${productData.categoryId}`);
+      const list = res.data?.data || res.data || [];
+      return list.filter((p) => String(p.id) !== String(id)).slice(0, 4);
+    },
+    enabled: !!productData?.categoryId
+  });
+
   useEffect(() => {
-    // Fetch product details from backend API
-    setLoading(true);
-    API.get(`/products/${id}`)
-      .then((res) => {
-        const prodData = res.data?.data || res.data;
-        if (!prodData) throw new Error('Product not found');
-        setProduct(prodData);
+    if (productData) {
+      setProduct(productData);
 
-        // Extract images
-        const imgs = parseProductImages(prodData);
-        setSelectedImage(imgs[0]);
+      // Extract images
+      const imgs = parseProductImages(productData);
+      setSelectedImage(imgs[0]);
 
-        // Set default variant or color/size
-        if (prodData.variants && prodData.variants.length > 0) {
-          const sorted = [...prodData.variants].sort((a, b) => {
-            const numA = parseFloat((a.title || '').replace(/[^0-9.]/g, ''));
-            const numB = parseFloat((b.title || '').replace(/[^0-9.]/g, ''));
-            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-            return (a.title || '').localeCompare(b.title || '');
-          });
-          setSelectedVariant(sorted[0]);
-        }
+      // Set default variant or color/size
+      if (productData.variants && productData.variants.length > 0) {
+        const sorted = [...productData.variants].sort((a, b) => {
+          const numA = parseFloat((a.title || '').replace(/[^0-9.]/g, ''));
+          const numB = parseFloat((b.title || '').replace(/[^0-9.]/g, ''));
+          if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+          return (a.title || '').localeCompare(b.title || '');
+        });
+        setSelectedVariant(sorted[0]);
+      }
+    }
+  }, [productData]);
 
-        // Fetch related products (same category or all products)
-        const catQuery = prodData.categoryId ? `?categoryId=${prodData.categoryId}` : '';
-        API.get(`/products${catQuery}`)
-          .then((relRes) => {
-            const list = relRes.data?.data || relRes.data || [];
-            const filtered = list.filter((p) => String(p.id) !== String(id)).slice(0, 4);
-            setRelatedProducts(filtered);
-          })
-          .catch(() => setRelatedProducts([]));
+  useEffect(() => {
+    setRelatedProducts(relatedList);
+  }, [relatedList]);
 
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error('Error fetching product details:', err);
-        setLoading(false);
-      });
-
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
 
