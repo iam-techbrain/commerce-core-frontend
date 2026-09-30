@@ -1,12 +1,12 @@
-# 🛍️ Chhabra Sports - E-Commerce Storefront & Admin Portal
+# Chhabra Sports - E-Commerce Storefront & Admin Portal
 
 > High-performance, modern full-stack e-commerce frontend built with **React 18**, **Vite 5**, and **TanStack Query v5**. Features a responsive customer shopping experience and a complete enterprise admin dashboard.
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
-### 🛒 Customer Storefront
+### Customer Storefront
 - **Dynamic Catalog & Filtering**: Browse products with server-side pagination, price sorting, brand, and category filtering.
 - **Product Details & Variants**: Multi-attribute variant selectors (Colors, Sizes, Specs), high-res image galleries, discount badges, and customer reviews.
 - **Cart & Slide-in Drawer**: Instant cart updates with stock validation limits, coupon code discount engine, and free-shipping indicators.
@@ -14,7 +14,7 @@
 - **User Profile Portal**: Manage personal details, update password, track active and past orders, view invoices, and manage delivery addresses.
 - **Performance Optimized**: Data fetching powered by **TanStack Query v5** with 5-minute stale-time caching, eliminating redundant API requests to the server.
 
-### 🛡️ Admin Management Console (`/admin`)
+### Admin Management Console (`/admin`)
 - **RuangAdmin Modern Theme**: Sleek administrative interface with responsive sidebar and top navigation.
 - **Live Theme Customizer**: Real-time palette color picker for Sidebar, Header, Body, and Footer with instant browser LocalStorage persistence.
 - **Product Management**:
@@ -27,7 +27,7 @@
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Technology | Version | Purpose |
 | :--- | :--- | :--- |
@@ -40,7 +40,7 @@
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 commerce-core-frontend/
@@ -70,7 +70,7 @@ commerce-core-frontend/
 
 ---
 
-## ⚡ Getting Started
+## Getting Started
 
 ### Prerequisites
 - **Node.js**: `v18.0.0` or higher (Recommended: `v20+` or `v24+`)
@@ -95,7 +95,7 @@ commerce-core-frontend/
 
 ---
 
-## 📦 Build & Production
+## Build & Production
 
 To generate a minified, production-ready bundle with manual chunk splitting:
 
@@ -116,7 +116,7 @@ Configured in `vite.config.js`:
 
 ---
 
-## 🔑 Default Admin Access
+## Default Admin Access
 
 To access the Admin Portal (`http://localhost:5173/admin/login`):
 - **Email**: `admin@ecommerce.com`
