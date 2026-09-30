@@ -74,6 +74,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (updateData) => {
+    if (!user) return { success: false, message: 'User not logged in' };
+    const res = await API.put(`/users/${user.id}`, updateData);
+    if (res.data.success) {
+      const updated = res.data.data;
+      if (updated.gender) localStorage.setItem(`user_gender_${user.id}`, updated.gender);
+      if (updated.avatar !== undefined) {
+        if (updated.avatar) localStorage.setItem(`user_avatar_${user.id}`, updated.avatar);
+        else localStorage.removeItem(`user_avatar_${user.id}`);
+      }
+      setUser((prev) => ({ ...prev, ...updated }));
+    }
+    return res.data;
+  };
+
   const register = async (username, email, password, role = 'CUSTOMER', gender = 'male', phone = '') => {
     const res = await API.post('/auth/register', { username, email, password, role, gender, phone });
     return res.data;
@@ -86,7 +101,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout, updateGender, updateAvatar }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout, updateGender, updateAvatar, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

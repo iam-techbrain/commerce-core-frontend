@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import API from '../../api/axios';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { getImageUrl } from '../../utils/image.util';
@@ -24,7 +25,9 @@ import {
   Settings,
   Check,
   Camera,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Sliders,
+  ShieldCheck
 } from 'lucide-react';
 
 const AdminProductsPage = () => {
@@ -44,6 +47,11 @@ const AdminProductsPage = () => {
   const [categoryId, setCategoryId] = useState('');
   const [brandId, setBrandId] = useState('');
   const [description, setDescription] = useState('');
+  const [dynamicSpecs, setDynamicSpecs] = useState({
+    'Country of Origin': 'India',
+    'Warranty': '1 Year Manufacturer Defect Warranty'
+  });
+  const [lookups, setLookups] = useState({});
   
   // Image handling
   const [imageMode, setImageMode] = useState('url'); // 'url' or 'file'
@@ -103,35 +111,59 @@ const AdminProductsPage = () => {
   const [imageModalPreview, setImageModalPreview] = useState('');
   const [imageModalUploading, setImageModalUploading] = useState(false);
 
+  // 🎛️ MANAGE SPECIFICATIONS (Warranty, Country, etc.) MODAL STATE
+  const [specsModalProduct, setSpecsModalProduct] = useState(null);
+  const [specsModalData, setSpecsModalData] = useState({});
+  const [specsModalSaving, setSpecsModalSaving] = useState(false);
+  const [newSpecGroupInput, setNewSpecGroupInput] = useState('');
+  const [newSpecValInput, setNewSpecValInput] = useState('');
+
   // ✏️ Inline Table Edit State (Name & SKU)
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingRowData, setEditingRowData] = useState({ name: '', sku: '' });
   const [savingRowId, setSavingRowId] = useState(null);
   const [rowStatusMsg, setRowStatusMsg] = useState({});
 
-  const fetchProducts = async () => {
-    try {
-      const [prodRes, catRes, brandRes, attrRes] = await Promise.all([
+  const queryClient = useQueryClient();
+
+  const { data: adminData } = useQuery({
+    queryKey: ['admin-products-data'],
+    queryFn: async () => {
+      const [prodRes, catRes, brandRes, attrRes, lookupsRes] = await Promise.all([
         API.get('/products?limit=100'),
         API.get('/categories'),
         API.get('/brands'),
-        API.get('/attributes').catch(() => ({ data: { success: false, data: [] } }))
+        API.get('/attributes').catch(() => ({ data: { success: false, data: [] } })),
+        API.get('/lookups?grouped=true').catch(() => ({ data: { success: false, data: {} } }))
       ]);
-
-      if (prodRes.data.success) setProducts(prodRes.data.data);
-      if (catRes.data.success) setCategories(catRes.data.data);
-      if (brandRes.data.success) setBrands(brandRes.data.data);
-      if (attrRes.data?.success) setMasterAttributes(attrRes.data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+      return {
+        products: prodRes.data?.success ? prodRes.data.data : [],
+        categories: catRes.data?.success ? catRes.data.data : [],
+        brands: brandRes.data?.success ? brandRes.data.data : [],
+        masterAttributes: attrRes.data?.success ? attrRes.data.data : [],
+        lookups: lookupsRes.data?.success ? lookupsRes.data.data : {}
+      };
     }
-  };
+  });
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (adminData) {
+      setProducts(adminData.products);
+      setCategories(adminData.categories);
+      setBrands(adminData.brands);
+      setMasterAttributes(adminData.masterAttributes);
+      setLookups(adminData.lookups || {});
+      setLoading(false);
+    }
+  }, [adminData]);
+
+  const fetchProducts = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-products-data'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-lookups'] });
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    queryClient.invalidateQueries({ queryKey: ['home-products'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-analytics'] });
+  };
 
   // Download Sample Excel Template
   const handleDownloadTemplate = async () => {
@@ -218,9 +250,10 @@ const AdminProductsPage = () => {
         if (mrp) formData.append('mrp', mrp);
         formData.append('price', price);
         formData.append('stock', stock || 0);
-        formData.append('categoryId', categoryId);
+        if (categoryId) formData.append('categoryId', categoryId);
         if (brandId) formData.append('brandId', brandId);
         if (description) formData.append('description', description);
+        formData.append('specifications', JSON.stringify(dynamicSpecs));
         formData.append('image', imageFile);
         formData.append('hasVariants', hasVariants);
         if (hasVariants) formData.append('variants', JSON.stringify(formattedVariants));
@@ -245,6 +278,7 @@ const AdminProductsPage = () => {
           categoryId: parseInt(categoryId),
           brandId: brandId ? parseInt(brandId) : null,
           description: description || null,
+          specifications: dynamicSpecs,
           imageUrl: imageUrl.trim() || finalImages[0] || null,
           images: finalImages,
           hasVariants,
@@ -274,6 +308,10 @@ const AdminProductsPage = () => {
     setCategoryId('');
     setBrandId('');
     setDescription('');
+    setDynamicSpecs({
+      'Country of Origin': 'India',
+      'Warranty': '1 Year Manufacturer Defect Warranty'
+    });
     setImageFile(null);
     setImageUrl('');
     setGalleryUrls('');
@@ -678,6 +716,76 @@ const AdminProductsPage = () => {
     }
   };
 
+  // -------------------- 🎛️ MANAGE SPECIFICATIONS HANDLERS --------------------
+  const handleOpenSpecsModal = (p) => {
+    setSpecsModalProduct(p);
+    let parsed = {};
+    if (p.specifications) {
+      if (typeof p.specifications === 'string') {
+        try {
+          parsed = JSON.parse(p.specifications);
+        } catch (e) {}
+      } else if (typeof p.specifications === 'object') {
+        parsed = { ...p.specifications };
+      }
+    }
+    setSpecsModalData(parsed);
+    setNewSpecGroupInput('');
+    setNewSpecValInput('');
+  };
+
+  const handleUpdateSpecValue = (group, newVal) => {
+    setSpecsModalData((prev) => ({
+      ...prev,
+      [group]: newVal
+    }));
+  };
+
+  const handleRemoveSpec = (group) => {
+    setSpecsModalData((prev) => {
+      const copy = { ...prev };
+      delete copy[group];
+      return copy;
+    });
+  };
+
+  const handleAddNewSpec = () => {
+    if (!newSpecGroupInput.trim() || !newSpecValInput.trim()) {
+      alert('Specification name aur value dono required hain!');
+      return;
+    }
+    setSpecsModalData((prev) => ({
+      ...prev,
+      [newSpecGroupInput.trim()]: newSpecValInput.trim()
+    }));
+    setNewSpecGroupInput('');
+    setNewSpecValInput('');
+  };
+
+  const handleSaveSpecsModal = async () => {
+    if (!specsModalProduct) return;
+    setSpecsModalSaving(true);
+    try {
+      const res = await API.put(`/products/${specsModalProduct.id}`, {
+        specifications: specsModalData
+      });
+      if (res.data.success) {
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === specsModalProduct.id ? { ...p, specifications: specsModalData } : p
+          )
+        );
+        showRowStatus(specsModalProduct.id, 'Specs Updated!');
+        setSpecsModalProduct(null);
+        fetchProducts();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update specifications!');
+    } finally {
+      setSpecsModalSaving(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div>
@@ -1033,6 +1141,73 @@ const AdminProductsPage = () => {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                   />
+                </div>
+
+                {/* 🌍 Dynamic Specifications Matrix (Country of Origin, Warranty & Custom Groups) */}
+                <div style={{ marginBottom: '18px', padding: '14px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--card-border)', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <label style={{ margin: 0, fontWeight: 700, fontSize: '0.88rem' }}>
+                      Specifications & Metadata (JSON Matrix)
+                    </label>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--admin-text-muted)' }}>
+                      Auto-synced with Metadata Master
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                    {Object.keys(lookups).length > 0 ? (
+                      Object.keys(lookups).map((groupName) => {
+                        const options = lookups[groupName] || [];
+                        const currentValue = dynamicSpecs[groupName] || '';
+
+                        return (
+                          <div key={groupName} className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>{groupName}</label>
+                            <select
+                              className="form-control"
+                              value={currentValue}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setDynamicSpecs((prev) => ({ ...prev, [groupName]: val }));
+                              }}
+                            >
+                              <option value="">-- Select {groupName} --</option>
+                              {options.map((opt) => (
+                                <option key={opt.id} value={opt.value}>
+                                  {opt.value}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Country of Origin</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={dynamicSpecs['Country of Origin'] || ''}
+                            onChange={(e) => {
+                              setDynamicSpecs((prev) => ({ ...prev, 'Country of Origin': e.target.value }));
+                            }}
+                          />
+                        </div>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 600 }}>Warranty Terms</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={dynamicSpecs['Warranty'] || ''}
+                            onChange={(e) => {
+                              setDynamicSpecs((prev) => ({ ...prev, 'Warranty': e.target.value }));
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* 🖼️ IMAGE CONFIGURATION (Link vs File + Download Option) */}
@@ -2302,6 +2477,326 @@ const AdminProductsPage = () => {
           </div>
         )}
 
+        {/* -------------------- 🎛️ MANAGE SPECIFICATIONS (WARRANTY / COUNTRY) MODAL -------------------- */}
+        {specsModalProduct && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 99999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px',
+              background: 'rgba(0, 0, 0, 0.7)',
+              backdropFilter: 'blur(5px)'
+            }}
+          >
+            <div
+              className="admin-card"
+              style={{
+                width: '100%',
+                maxWidth: '650px',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                padding: '24px',
+                background: '#ffffff',
+                borderRadius: '16px',
+                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px'
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e2e8f0', paddingBottom: '14px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Sliders size={20} color="#4e73df" />
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: '#0f172a' }}>
+                      Manage Specifications & Warranty
+                    </h2>
+                  </div>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                    {specsModalProduct.name} &bull; <span style={{ fontFamily: 'monospace' }}>{specsModalProduct.sku}</span>
+                  </p>
+                </div>
+                <button
+                  className="icon-btn"
+                  onClick={() => setSpecsModalProduct(null)}
+                  disabled={specsModalSaving}
+                  style={{ borderRadius: '50%' }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* 🛡️ Quick Warranty Focus Manager Banner */}
+              <div
+                style={{
+                  background: specsModalData['Warranty'] ? 'rgba(37, 99, 235, 0.05)' : 'rgba(245, 158, 11, 0.05)',
+                  border: specsModalData['Warranty'] ? '1px solid rgba(37, 99, 235, 0.25)' : '1px dashed rgba(245, 158, 11, 0.4)',
+                  borderRadius: '12px',
+                  padding: '14px 16px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <ShieldCheck size={24} color={specsModalData['Warranty'] ? '#2563eb' : '#d97706'} />
+                    <div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>
+                        Product Warranty:{' '}
+                        <span style={{ color: specsModalData['Warranty'] ? '#2563eb' : '#dc2626' }}>
+                          {specsModalData['Warranty'] ? specsModalData['Warranty'] : 'Koi Warranty Nahi Hai'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                        {specsModalData['Warranty']
+                          ? 'Warranty hatane ke liye "Warranty Hatayein" dabayein, ya neeche se change karein:'
+                          : 'Ek click me warranty lagane ke liye neeche se choose karein:'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {specsModalData['Warranty'] && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSpec('Warranty')}
+                      style={{
+                        background: '#fee2e2',
+                        border: '1px solid #fecaca',
+                        color: '#dc2626',
+                        cursor: 'pointer',
+                        borderRadius: '8px',
+                        padding: '6px 14px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        transition: 'all 0.15s ease'
+                      }}
+                      title="Remove Warranty from this product"
+                    >
+                      <Trash2 size={14} />
+                      <span>Warranty Hatayein (Remove)</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Warranty Presets */}
+                <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Quick Set Warranty:</span>
+                  {[
+                    '1 Year Manufacturer Defect Warranty',
+                    '2 Years Replacement Warranty',
+                    '6 Months Domestic Warranty',
+                    'No Warranty'
+                  ].map((wOption) => {
+                    const isSelected = specsModalData['Warranty'] === wOption;
+                    return (
+                      <button
+                        key={wOption}
+                        type="button"
+                        onClick={() => handleUpdateSpecValue('Warranty', wOption)}
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          background: isSelected ? '#2563eb' : '#ffffff',
+                          color: isSelected ? '#ffffff' : '#334155',
+                          border: isSelected ? '1px solid #1d4ed8' : '1px solid #cbd5e1',
+                          cursor: 'pointer',
+                          fontWeight: isSelected ? 700 : 500,
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {isSelected ? '✓ ' : '+ '}
+                        {wOption}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* All Current Specifications List */}
+              <div>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#334155', marginBottom: '10px' }}>
+                  All Specifications on this Product ({Object.keys(specsModalData).length})
+                </h4>
+
+                {Object.keys(specsModalData).length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>Koi bhi specification nahi hai. Neeche se add karein!</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {Object.entries(specsModalData).map(([key, val]) => {
+                      const groupOptions = lookups[key] || [];
+
+                      return (
+                        <div
+                          key={key}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '10px 14px',
+                            background: '#f8fafc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '10px'
+                          }}
+                        >
+                          <div style={{ minWidth: '160px' }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b' }}>
+                              {key}
+                            </span>
+                          </div>
+
+                          <div style={{ flex: 1 }}>
+                            {groupOptions.length > 0 ? (
+                              <select
+                                className="form-control"
+                                value={val}
+                                onChange={(e) => handleUpdateSpecValue(key, e.target.value)}
+                                style={{ padding: '6px 10px', fontSize: '0.85rem' }}
+                              >
+                                {groupOptions.map((opt) => (
+                                  <option key={opt.id} value={opt.value}>
+                                    {opt.value}
+                                  </option>
+                                ))}
+                                {!groupOptions.some((opt) => opt.value === val) && (
+                                  <option value={val}>{val} (Custom)</option>
+                                )}
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={val}
+                                onChange={(e) => handleUpdateSpecValue(key, e.target.value)}
+                                style={{ padding: '6px 10px', fontSize: '0.85rem' }}
+                              />
+                            )}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSpec(key)}
+                            title={`Remove ${key}`}
+                            style={{
+                              background: '#fee2e2',
+                              border: '1px solid #fecaca',
+                              color: '#dc2626',
+                              cursor: 'pointer',
+                              borderRadius: '6px',
+                              padding: '6px 10px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600
+                            }}
+                          >
+                            <Trash2 size={14} />
+                            <span>Remove</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Add New Spec Block */}
+              <div
+                style={{
+                  background: '#f1f5f9',
+                  padding: '16px',
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1'
+                }}
+              >
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+                  + Add / Assign Specification to this Product
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', alignItems: 'center' }}>
+                  <div>
+                    <input
+                      type="text"
+                      list="specs-group-suggestions"
+                      className="form-control"
+                      value={newSpecGroupInput}
+                      onChange={(e) => {
+                        const grp = e.target.value;
+                        setNewSpecGroupInput(grp);
+                        const firstVal = lookups[grp]?.[0]?.value || '';
+                        if (firstVal) setNewSpecValInput(firstVal);
+                      }}
+                      placeholder="Group (e.g. Warranty, Color)..."
+                      style={{ padding: '7px 10px', fontSize: '0.85rem' }}
+                    />
+                    <datalist id="specs-group-suggestions">
+                      {Object.keys(lookups).map((g) => (
+                        <option key={g} value={g} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      list="specs-val-suggestions"
+                      placeholder="Value (e.g. 1 Year, Japan)..."
+                      className="form-control"
+                      value={newSpecValInput}
+                      onChange={(e) => setNewSpecValInput(e.target.value)}
+                      style={{ padding: '7px 10px', fontSize: '0.85rem' }}
+                    />
+                    <datalist id="specs-val-suggestions">
+                      {(lookups[newSpecGroupInput] || []).map((opt) => (
+                        <option key={opt.id} value={opt.value} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddNewSpec}
+                    className="admin-btn admin-btn-primary admin-btn-sm"
+                    style={{ padding: '8px 14px', whiteSpace: 'nowrap' }}
+                  >
+                    <Plus size={14} />
+                    <span>Add</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '14px' }}>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-outline"
+                  onClick={() => setSpecsModalProduct(null)}
+                  disabled={specsModalSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-primary"
+                  onClick={handleSaveSpecsModal}
+                  disabled={specsModalSaving}
+                  style={{ minWidth: '140px' }}
+                >
+                  {specsModalSaving ? 'Saving...' : 'Save Specifications'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* -------------------- 📋 PRODUCTS TABLE -------------------- */}
         <div className="admin-card">
           <div className="admin-card-header">
@@ -2485,6 +2980,46 @@ const AdminProductsPage = () => {
                                   </div>
                                   <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
                                     SKU: <code style={{ background: '#f1f5f9', color: '#334155', padding: '1px 5px', borderRadius: '4px', border: '1px solid #e2e8f0', fontSize: '0.72rem' }}>{p.sku || `PRD-${p.id}`}</code>
+                                  </div>
+
+                                  {/* Quick Warranty / Specifications Badge Button */}
+                                  <div style={{ marginTop: '5px' }}>
+                                    {(() => {
+                                      let specs = {};
+                                      if (p.specifications) {
+                                        if (typeof p.specifications === 'string') {
+                                          try { specs = JSON.parse(p.specifications); } catch (e) {}
+                                        } else if (typeof p.specifications === 'object') {
+                                          specs = p.specifications;
+                                        }
+                                      }
+                                      const warrantyVal = specs['Warranty'];
+                                      return (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleOpenSpecsModal(p)}
+                                          style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            padding: '2px 7px',
+                                            borderRadius: '5px',
+                                            background: warrantyVal ? 'rgba(78, 115, 223, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                                            border: warrantyVal ? '1px solid rgba(78, 115, 223, 0.3)' : '1px dashed rgba(245, 158, 11, 0.5)',
+                                            color: warrantyVal ? '#2563eb' : '#d97706',
+                                            fontSize: '0.7rem',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.15s ease'
+                                          }}
+                                          title="Manage or remove Warranty / Specifications"
+                                        >
+                                          <ShieldCheck size={11} />
+                                          <span>{warrantyVal ? `Warranty: ${warrantyVal}` : '+ Add / Set Warranty'}</span>
+                                          <Sliders size={10} style={{ opacity: 0.6, marginLeft: '2px' }} />
+                                        </button>
+                                      );
+                                    })()}
                                   </div>
                                   {rowStatusMsg[p.id] && (
                                     <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 800, marginTop: '2px', display: 'inline-block' }}>
@@ -2739,6 +3274,14 @@ const AdminProductsPage = () => {
                                 title="View & Manage Variants"
                               >
                                 <Layers size={16} />
+                              </button>
+                              <button
+                                className="icon-btn"
+                                style={{ color: '#4e73df', borderColor: 'rgba(78, 115, 223, 0.3)' }}
+                                onClick={() => handleOpenSpecsModal(p)}
+                                title="Manage Specifications & Warranty"
+                              >
+                                <Sliders size={16} />
                               </button>
                               <button
                                 className="icon-btn"

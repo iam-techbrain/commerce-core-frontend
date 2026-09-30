@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import API from '../../api/axios';
 import AdminLayout from '../../components/admin/AdminLayout';
 import {
@@ -19,9 +20,7 @@ import { getImageUrl, getCategoryFallbackImage } from '../../utils/image.util';
 import { compressImage } from '../../utils/imageCompressor';
 
 const AdminCategoriesPage = () => {
-  const [categories, setCategories] = useState([]);
-  const [subcategories, setSubcategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // Form State for Adding New Main Category
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -56,24 +55,30 @@ const AdminCategoriesPage = () => {
   });
   const [savingSubId, setSavingSubId] = useState(null);
 
-  const fetchAllData = async () => {
-    try {
-      const [catRes, subRes] = await Promise.all([
-        API.get('/categories'),
-        API.get('/subcategories')
-      ]);
-      if (catRes.data.success) setCategories(catRes.data.data);
-      if (subRes.data.success) setSubcategories(subRes.data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+  // TanStack Query: Main Categories
+  const { data: categories = [], isLoading: loadingCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await API.get('/categories');
+      return res.data?.success ? res.data.data : [];
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchAllData();
-  }, []);
+  // TanStack Query: Subcategories
+  const { data: subcategories = [], isLoading: loadingSub } = useQuery({
+    queryKey: ['subcategories'],
+    queryFn: async () => {
+      const res = await API.get('/subcategories');
+      return res.data?.success ? res.data.data : [];
+    }
+  });
+
+  const loading = loadingCategories || loadingSub;
+
+  const fetchAllData = () => {
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+    queryClient.invalidateQueries({ queryKey: ['subcategories'] });
+  };
 
   // --- Main Category Inline Edit Handlers ---
   const handleStartCatEdit = (cat) => {

@@ -14,7 +14,8 @@ import {
   Shield,
   Sparkles,
   Settings,
-  Users
+  Users,
+  Sliders
 } from 'lucide-react';
 
 const AdminSidebar = ({ collapsed, mobileOpen, onCloseMobile }) => {
@@ -94,6 +95,18 @@ const AdminSidebar = ({ collapsed, mobileOpen, onCloseMobile }) => {
           <div className="admin-nav-item-inner">
             <Tag size={19} />
             <span>Brands</span>
+          </div>
+          <ChevronRight size={14} className="admin-nav-arrow" style={{ opacity: 0.6 }} />
+        </NavLink>
+
+        <NavLink
+          to="/admin/lookups"
+          className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
+          title="Metadata & Specs"
+        >
+          <div className="admin-nav-item-inner">
+            <Sliders size={19} />
+            <span>Metadata & Specs</span>
           </div>
           <ChevronRight size={14} className="admin-nav-arrow" style={{ opacity: 0.6 }} />
         </NavLink>

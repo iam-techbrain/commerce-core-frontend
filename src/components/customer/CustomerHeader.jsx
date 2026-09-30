@@ -320,6 +320,30 @@ const CustomerHeader = () => {
                     </div>
 
                     <button
+                      onClick={() => handleNavToProfileTab('profile')}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '10px 16px',
+                        background: 'none',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s'
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--parchment-dim)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                    >
+                      <User size={16} color="var(--pitch)" />
+                      <span>My Profile</span>
+                    </button>
+
+                    <button
                       onClick={() => handleNavToProfileTab('orders')}
                       style={{
                         width: '100%',

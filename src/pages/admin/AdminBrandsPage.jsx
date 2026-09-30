@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import API from '../../api/axios';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { Plus, Trash2, Tag, X, Home, ChevronRight, Edit2, Check, Upload, Image as ImageIcon } from 'lucide-react';
@@ -7,8 +8,7 @@ import { getImageUrl } from '../../utils/image.util';
 import { compressImage } from '../../utils/imageCompressor';
 
 const AdminBrandsPage = () => {
-  const [brands, setBrands] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // Modal State for Adding New Brand
   const [showModal, setShowModal] = useState(false);
@@ -31,20 +31,18 @@ const AdminBrandsPage = () => {
 
   const fileInputRef = useRef(null);
 
-  const fetchBrands = async () => {
-    try {
+  // TanStack Query: Brands
+  const { data: brands = [], isLoading: loading } = useQuery({
+    queryKey: ['brands'],
+    queryFn: async () => {
       const res = await API.get('/brands');
-      if (res.data.success) setBrands(res.data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+      return res.data?.success ? res.data.data : [];
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchBrands();
-  }, []);
+  const fetchBrands = () => {
+    queryClient.invalidateQueries({ queryKey: ['brands'] });
+  };
 
   // Start Inline Edit
   const handleStartEdit = (b) => {

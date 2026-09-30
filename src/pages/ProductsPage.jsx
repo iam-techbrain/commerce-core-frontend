@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import API from '../api/axios';
 import ProductCard from '../components/product/ProductCard';
 import Pagination from '../components/common/Pagination';
@@ -10,18 +11,12 @@ const ProductsPage = () => {
   const categoryIdParam = searchParams.get('categoryId');
   const subCategoryIdParam = searchParams.get('subCategoryId');
 
-  const [categories, setCategories] = useState([]);
-  const [subcategories, setSubcategories] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [pagination, setPagination] = useState(null);
-
   const [selectedCategoryId, setSelectedCategoryId] = useState(categoryIdParam ? parseInt(categoryIdParam) : null);
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState(subCategoryIdParam ? parseInt(subCategoryIdParam) : null);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
 
   // Sync state if URL query params change
   useEffect(() => {
@@ -38,29 +33,29 @@ const ProductsPage = () => {
     }
   }, [categoryIdParam, subCategoryIdParam]);
 
-  // Fetch Categories for Filter Pills
-  useEffect(() => {
-    API.get('/categories')
-      .then((res) => {
-        if (res.data.success) setCategories(res.data.data);
-      })
-      .catch((err) => console.error(err));
-  }, []);
+  // TanStack Query: Categories for filter pills
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await API.get('/categories');
+      return res.data?.success ? res.data.data : [];
+    }
+  });
 
-  // Fetch Subcategories (filtered by category if selected)
-  useEffect(() => {
-    const url = selectedCategoryId ? `/subcategories?categoryId=${selectedCategoryId}` : '/subcategories';
-    API.get(url)
-      .then((res) => {
-        if (res.data.success) setSubcategories(res.data.data);
-      })
-      .catch((err) => console.error(err));
-  }, [selectedCategoryId]);
+  // TanStack Query: Subcategories (filtered by selected category)
+  const { data: subcategories = [] } = useQuery({
+    queryKey: ['subcategories', { categoryId: selectedCategoryId }],
+    queryFn: async () => {
+      const url = selectedCategoryId ? `/subcategories?categoryId=${selectedCategoryId}` : '/subcategories';
+      const res = await API.get(url);
+      return res.data?.success ? res.data.data : [];
+    }
+  });
 
-  // Fetch Paginated Products
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
+  // TanStack Query: Paginated Products with cached smooth transitions
+  const { data: productsData, isLoading: loading } = useQuery({
+    queryKey: ['products', { page, limit: 12, sortBy, sortOrder, selectedSubCategoryId, selectedCategoryId, search }],
+    queryFn: async () => {
       const params = new URLSearchParams({
         page,
         limit: 12,
@@ -77,20 +72,13 @@ const ProductsPage = () => {
       if (search) params.append('search', search);
 
       const res = await API.get(`/products?${params.toString()}`);
-      if (res.data.success) {
-        setProducts(res.data.data);
-        setPagination(res.data.pagination);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data?.success ? res.data : { data: [], pagination: null };
+    },
+    placeholderData: (previousData) => previousData,
+  });
 
-  useEffect(() => {
-    fetchProducts();
-  }, [page, selectedCategoryId, selectedSubCategoryId, search, sortBy, sortOrder]);
+  const products = productsData?.data || [];
+  const pagination = productsData?.pagination || null;
 
   const handleCategorySelect = (catId) => {
     setSelectedCategoryId(catId);

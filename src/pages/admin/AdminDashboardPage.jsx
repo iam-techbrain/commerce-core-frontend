@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import API from '../../api/axios';
 import AdminLayout from '../../components/admin/AdminLayout';
 import AdminStatCard from '../../components/admin/AdminStatCard';
@@ -16,19 +17,14 @@ import {
 } from 'lucide-react';
 
 const AdminDashboardPage = () => {
-  const [analytics, setAnalytics] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    API.get('/dashboard/analytics')
-      .then((res) => {
-        if (res.data.success) {
-          setAnalytics(res.data.data);
-        }
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: analytics, isLoading: loading } = useQuery({
+    queryKey: ['admin-analytics'],
+    queryFn: async () => {
+      const res = await API.get('/dashboard/analytics');
+      return res.data?.success ? res.data.data : null;
+    },
+    refetchInterval: 30000, // Refresh metrics every 30 seconds
+  });
 
   return (
     <AdminLayout>

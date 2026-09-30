@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import API from '../api/axios';
 import { AuthContext } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
 import { WishlistContext } from '../context/WishlistContext';
 import ProfileAvatar from '../components/common/ProfileAvatar';
+import { compressImage } from '../utils/imageCompressor';
 import {
   User,
   MapPin,
@@ -15,21 +17,46 @@ import {
   Heart,
   ShoppingCart,
   Trash2,
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle,
+  Key,
+  Camera,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  Save
 } from 'lucide-react';
 
 const ProfilePage = () => {
-  const { user, logout, updateGender, updateAvatar } = useContext(AuthContext);
+  const { user, setUser, logout, updateGender, updateAvatar, updateProfile } = useContext(AuthContext);
   const { addToCart } = useContext(CartContext);
   const { wishlistItems, toggleWishlist, fetchWishlist } = useContext(WishlistContext);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
-  const tabParam = searchParams.get('tab') || 'orders';
-  const [activeTab, setActiveTab] = useState(tabParam); // 'orders', 'addresses', 'wishlist'
-  const [orders, setOrders] = useState([]);
-  const [addresses, setAddresses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const tabParam = searchParams.get('tab') || 'profile';
+  const [activeTab, setActiveTab] = useState(tabParam); // 'profile', 'orders', 'addresses', 'wishlist'
+
+  // Profile Form State
+  const [profileName, setProfileName] = useState(user?.username || '');
+  const [profilePhone, setProfilePhone] = useState(user?.phone || '');
+  const [profileGender, setProfileGender] = useState(user?.gender || 'male');
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState(user?.avatar || '');
+  const [profileAvatarFile, setProfileAvatarFile] = useState(null);
+  const [profileAvatarPreview, setProfileAvatarPreview] = useState(user?.avatar || '');
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileMsg, setProfileMsg] = useState(null); // { type: 'success'|'error', text: '' }
+
+  // Password Form State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState(null);
 
   // Address Form State
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -40,9 +67,20 @@ const ProfilePage = () => {
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
 
+  // Sync state when user loads
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.username || '');
+      setProfilePhone(user.phone || '');
+      setProfileGender(user.gender || 'male');
+      setProfileAvatarUrl(user.avatar || '');
+      setProfileAvatarPreview(user.avatar || '');
+    }
+  }, [user]);
+
   // Sync tab with URL
   useEffect(() => {
-    if (tabParam && ['orders', 'addresses', 'wishlist'].includes(tabParam)) {
+    if (tabParam && ['profile', 'orders', 'addresses', 'wishlist'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
@@ -52,30 +90,137 @@ const ProfilePage = () => {
     setSearchParams({ tab });
   };
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
+  const handleSelectGender = (g) => {
+    setProfileGender(g);
+    if (!profileAvatarFile && (!profileAvatarUrl || profileAvatarUrl.includes('/avatars/'))) {
+      const defaultPath = g === 'female' ? '/avatars/female.avif' : '/avatars/male.avif';
+      setProfileAvatarUrl(defaultPath);
+      setProfileAvatarPreview(defaultPath);
+    }
+  };
+
+  const handleAvatarFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const compressed = await compressImage(file);
+      setProfileAvatarFile(compressed);
+      setProfileAvatarPreview(URL.createObjectURL(compressed));
+    }
+  };
+
+  const handleResetAvatar = () => {
+    setProfileAvatarFile(null);
+    const defaultPath = profileGender === 'female' ? '/avatars/female.avif' : '/avatars/male.avif';
+    setProfileAvatarUrl(defaultPath);
+    setProfileAvatarPreview(defaultPath);
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!profileName.trim()) {
+      setProfileMsg({ type: 'error', text: 'Name khali nahi ho sakta!' });
+      return;
+    }
+    setSavingProfile(true);
+    setProfileMsg(null);
+    try {
+      let res;
+      if (profileAvatarFile) {
+        const formData = new FormData();
+        formData.append('username', profileName.trim());
+        formData.append('phone', profilePhone.trim());
+        formData.append('gender', profileGender);
+        formData.append('avatar', profileAvatarFile);
+        res = await API.put(`/users/${user.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } else {
+        res = await API.put(`/users/${user.id}`, {
+          username: profileName.trim(),
+          phone: profilePhone.trim(),
+          gender: profileGender,
+          avatar: profileAvatarUrl.trim() || (profileGender === 'female' ? '/avatars/female.avif' : '/avatars/male.avif')
+        });
+      }
+
+      if (res.data.success) {
+        const updated = res.data.data;
+        if (updated.gender) localStorage.setItem(`user_gender_${user.id}`, updated.gender);
+        if (updated.avatar) localStorage.setItem(`user_avatar_${user.id}`, updated.avatar);
+        setUser((prev) => ({ ...prev, ...updated }));
+        setProfileMsg({ type: 'success', text: 'Profile details successfully update ho gayi! 🎉' });
+        setTimeout(() => setProfileMsg(null), 4000);
+      }
+    } catch (err) {
+      setProfileMsg({ type: 'error', text: err.response?.data?.message || 'Profile update failed!' });
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    if (!currentPassword) {
+      setPasswordMsg({ type: 'error', text: 'Current password enter karein!' });
+      return;
+    }
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordMsg({ type: 'error', text: 'New password kam se kam 6 characters ka hona chahiye!' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMsg({ type: 'error', text: 'New password aur Confirm password match nahi ho rahe!' });
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        const [ordersRes, addressRes] = await Promise.all([
-          API.get('/orders/my-orders'),
-          API.get('/addresses')
-        ]);
-
-        if (ordersRes.data.success) setOrders(ordersRes.data.data || []);
-        if (addressRes.data.success) setAddresses(addressRes.data.data || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+    setSavingPassword(true);
+    setPasswordMsg(null);
+    try {
+      const res = await API.put(`/users/${user.id}`, {
+        currentPassword,
+        password: newPassword
+      });
+      if (res.data.success) {
+        setPasswordMsg({ type: 'success', text: 'Password successfully change ho gaya! 🔒' });
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => setPasswordMsg(null), 4000);
       }
-    };
+    } catch (err) {
+      setPasswordMsg({ type: 'error', text: err.response?.data?.message || 'Password update failed!' });
+    } finally {
+      setSavingPassword(false);
+    }
+  };
 
-    fetchData();
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
   }, [user, navigate]);
+
+  // TanStack Query: Orders
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
+    queryKey: ['my-orders'],
+    queryFn: async () => {
+      const res = await API.get('/orders/my-orders');
+      return res.data?.success ? res.data.data : [];
+    },
+    enabled: !!user,
+  });
+
+  // TanStack Query: Addresses
+  const { data: addresses = [], isLoading: addressesLoading } = useQuery({
+    queryKey: ['my-addresses'],
+    queryFn: async () => {
+      const res = await API.get('/addresses');
+      return res.data?.success ? res.data.data : [];
+    },
+    enabled: !!user,
+  });
+
+  const loading = ordersLoading || addressesLoading;
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
@@ -91,7 +236,7 @@ const ProfilePage = () => {
         isDefault: addresses.length === 0
       });
       if (res.data.success) {
-        setAddresses([res.data.data, ...addresses]);
+        queryClient.invalidateQueries({ queryKey: ['my-addresses'] });
         setShowAddressForm(false);
         setFullName('');
         setPhone('');
@@ -136,146 +281,41 @@ const ProfilePage = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '32px' }}>
         {/* Profile Sidebar */}
         <div className="profile-card" style={{ height: 'fit-content' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <ProfileAvatar user={user} size={76} />
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <ProfileAvatar user={user} size={84} />
           </div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '4px', color: 'var(--pitch)' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '4px', color: 'var(--pitch)', textAlign: 'center' }}>
             {user.username}
           </h2>
-          <p style={{ color: 'var(--ink-soft)', fontSize: '0.85rem', marginBottom: '14px' }}>{user.email}</p>
+          <p style={{ color: 'var(--ink-soft)', fontSize: '0.85rem', marginBottom: '14px', textAlign: 'center' }}>{user.email}</p>
 
-          {/* Gender / Avatar Selection */}
-          <div
-            style={{
-              background: 'var(--parchment)',
-              padding: '12px 14px',
-              borderRadius: '8px',
-              border: '1px solid var(--line)',
-              marginBottom: '16px'
-            }}
-          >
-            <label
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <span
               style={{
-                fontSize: '11px',
+                display: 'inline-block',
+                padding: '4px 14px',
+                borderRadius: '99px',
+                fontSize: '0.75rem',
                 fontWeight: 800,
-                color: 'var(--pitch)',
-                display: 'block',
-                marginBottom: '8px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
+                background: 'rgba(212, 155, 58, 0.15)',
+                color: 'var(--gold-dark)',
+                fontFamily: 'Space Mono, monospace'
               }}
             >
-              Profile Avatar / Gender
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <button
-                type="button"
-                onClick={() => updateGender('male')}
-                style={{
-                  padding: '7px 10px',
-                  borderRadius: '6px',
-                  border: (user.gender || 'male') === 'male' ? '1.5px solid var(--pitch)' : '1px solid var(--line)',
-                  background: (user.gender || 'male') === 'male' ? 'var(--pitch)' : 'var(--white)',
-                  color: (user.gender || 'male') === 'male' ? '#ffffff' : 'var(--ink)',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <span>👨 Male</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => updateGender('female')}
-                style={{
-                  padding: '7px 10px',
-                  borderRadius: '6px',
-                  border: user.gender === 'female' ? '1.5px solid #8F2B3B' : '1px solid var(--line)',
-                  background: user.gender === 'female' ? '#8F2B3B' : 'var(--white)',
-                  color: user.gender === 'female' ? '#ffffff' : 'var(--ink)',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <span>👩 Female</span>
-              </button>
-            </div>
-
-            {/* Custom Avatar Link */}
-            <div style={{ marginTop: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase' }}>
-                  Custom Photo URL
-                </span>
-                {user.avatar && (
-                  <button
-                    type="button"
-                    onClick={() => updateAvatar(null)}
-                    style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: '10px', cursor: 'pointer', padding: 0, fontWeight: 700 }}
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-              <input
-                type="url"
-                placeholder="Paste photo link (HTTPS)..."
-                defaultValue={user.avatar || ''}
-                key={user.avatar || 'empty'}
-                onBlur={(e) => {
-                  const val = e.target.value.trim();
-                  if (val !== (user.avatar || '')) {
-                    updateAvatar(val || null);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const val = e.target.value.trim();
-                    updateAvatar(val || null);
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '6px 8px',
-                  borderRadius: '6px',
-                  border: '1px solid var(--line)',
-                  fontSize: '11px',
-                  background: 'var(--white)',
-                  outline: 'none'
-                }}
-              />
-            </div>
+              {user.role || 'CUSTOMER'}
+            </span>
           </div>
 
-          <span
-            style={{
-              display: 'inline-block',
-              padding: '4px 12px',
-              borderRadius: '99px',
-              fontSize: '0.75rem',
-              fontWeight: 800,
-              background: 'rgba(212, 155, 58, 0.15)',
-              color: 'var(--gold-dark)',
-              marginBottom: '24px',
-              fontFamily: 'Space Mono, monospace'
-            }}
-          >
-            {user.role || 'CUSTOMER'}
-          </span>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              className={`pill-btn ${activeTab === 'profile' ? 'active' : ''}`}
+              onClick={() => handleTabChange('profile')}
+              style={{ justifyContent: 'flex-start', width: '100%', padding: '12px 18px', display: 'flex', alignItems: 'center', gap: '10px' }}
+            >
+              <User size={18} />
+              <span>My Profile</span>
+            </button>
+
             <button
               className={`pill-btn ${activeTab === 'orders' ? 'active' : ''}`}
               onClick={() => handleTabChange('orders')}
@@ -323,6 +363,444 @@ const ProfilePage = () => {
 
         {/* Main Profile Content Area */}
         <div>
+          {/* TAB 0: MY PROFILE SETTINGS */}
+          {activeTab === 'profile' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--pitch)', margin: 0 }}>
+                    My Profile & Account Details
+                  </h2>
+                </div>
+                <span className="eyebrow" style={{ background: 'var(--parchment)', padding: '6px 14px', borderRadius: '20px' }}>
+                  Role: <strong>{user.role || 'CUSTOMER'}</strong>
+                </span>
+              </div>
+
+              {/* Card 1: Personal Details & Avatar */}
+              <div className="profile-card" style={{ padding: '28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid var(--line)', paddingBottom: '16px', marginBottom: '22px' }}>
+                  <User size={22} color="var(--pitch)" />
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--pitch)' }}>
+                    Personal Information & Avatar
+                  </h3>
+                </div>
+
+                {profileMsg && (
+                  <div
+                    style={{
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      marginBottom: '20px',
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: profileMsg.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                      color: profileMsg.type === 'success' ? '#15803d' : '#b91c1c',
+                      border: `1px solid ${profileMsg.type === 'success' ? '#86efac' : '#fca5a5'}`
+                    }}
+                  >
+                    {profileMsg.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                    <span>{profileMsg.text}</span>
+                  </div>
+                )}
+
+                {/* Avatar & Photo Customizer Box */}
+                <div
+                  style={{
+                    background: 'var(--parchment)',
+                    padding: '22px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--line)',
+                    marginBottom: '24px',
+                    display: 'grid',
+                    gridTemplateColumns: '120px 1fr',
+                    gap: '24px',
+                    alignItems: 'center'
+                  }}
+                >
+                  {/* Live Preview Avatar */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                    <ProfileAvatar
+                      user={{
+                        ...user,
+                        gender: profileGender,
+                        avatar: profileAvatarPreview || user.avatar
+                      }}
+                      size={96}
+                    />
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase' }}>
+                      Live Preview
+                    </span>
+                  </div>
+
+                  {/* Photo & Gender Controls */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {/* Gender Buttons */}
+                    <div>
+                      <label style={{ fontSize: '11px', fontWeight: 800, color: 'var(--pitch)', display: 'block', marginBottom: '8px', textTransform: 'uppercase' }}>
+                        Gender / Avatar Selection:
+                      </label>
+                      <div style={{ display: 'inline-flex', gap: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectGender('male')}
+                          style={{
+                            padding: '8px 18px',
+                            borderRadius: '8px',
+                            border: profileGender === 'male' ? '2px solid var(--pitch)' : '1px solid var(--line)',
+                            background: profileGender === 'male' ? 'var(--pitch)' : 'var(--white)',
+                            color: profileGender === 'male' ? '#ffffff' : 'var(--ink)',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <span>👨 Male</span>
+                          {profileGender === 'male' && <CheckCircle2 size={14} />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectGender('female')}
+                          style={{
+                            padding: '8px 18px',
+                            borderRadius: '8px',
+                            border: profileGender === 'female' ? '2px solid #8F2B3B' : '1px solid var(--line)',
+                            background: profileGender === 'female' ? '#8F2B3B' : 'var(--white)',
+                            color: profileGender === 'female' ? '#ffffff' : 'var(--ink)',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <span>👩 Female</span>
+                          {profileGender === 'female' && <CheckCircle2 size={14} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Photo URL & File Upload */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px', alignItems: 'center' }}>
+                      <div>
+                        <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink-soft)', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
+                          Custom Photo URL (HTTPS Link):
+                        </label>
+                        <input
+                          type="url"
+                          className="form-control"
+                          placeholder="https://images.unsplash.com/..."
+                          value={profileAvatarUrl}
+                          onChange={(e) => {
+                            setProfileAvatarUrl(e.target.value);
+                            setProfileAvatarPreview(e.target.value);
+                          }}
+                          style={{ fontSize: '12px', padding: '8px 12px' }}
+                        />
+                      </div>
+
+                      <div style={{ alignSelf: 'flex-end' }}>
+                        <label
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 14px',
+                            borderRadius: '6px',
+                            background: 'var(--white)',
+                            border: '1px solid var(--line)',
+                            color: 'var(--pitch)',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                          title="Upload image from your computer (auto-compressed to WebP)"
+                        >
+                          <Camera size={14} />
+                          <span>Upload File</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarFileChange}
+                            style={{ display: 'none' }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {(profileAvatarUrl || profileAvatarFile) && (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={handleResetAvatar}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#dc2626',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            padding: 0
+                          }}
+                        >
+                          ↺ Reset to Default Gender Avatar
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Main Details Form */}
+                <form onSubmit={handleSaveProfile}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                    <div className="form-group">
+                      <label style={{ fontWeight: 700, color: 'var(--pitch)', fontSize: '0.88rem', marginBottom: '6px', display: 'block' }}>
+                        Full Name / Username *
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={profileName}
+                        onChange={(e) => setProfileName(e.target.value)}
+                        placeholder="Aapka Naam"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label style={{ fontWeight: 700, color: 'var(--pitch)', fontSize: '0.88rem', marginBottom: '6px', display: 'block' }}>
+                        Mobile / Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        className="form-control"
+                        value={profilePhone}
+                        onChange={(e) => setProfilePhone(e.target.value)}
+                        placeholder="+91 9876543210"
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+                    <div className="form-group">
+                      <label style={{ fontWeight: 700, color: 'var(--pitch)', fontSize: '0.88rem', marginBottom: '6px', display: 'block' }}>
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        className="form-control"
+                        value={user.email}
+                        disabled
+                        style={{ background: 'var(--parchment-dim)', color: 'var(--ink-soft)', cursor: 'not-allowed' }}
+                      />
+                      <small style={{ fontSize: '11px', color: 'var(--ink-soft)', marginTop: '4px', display: 'block' }}>
+                        Security reason se email change nahi kiya ja sakta.
+                      </small>
+                    </div>
+
+                    <div className="form-group">
+                      <label style={{ fontWeight: 700, color: 'var(--pitch)', fontSize: '0.88rem', marginBottom: '6px', display: 'block' }}>
+                        Account Role & Status
+                      </label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={`${user.role || 'CUSTOMER'} (Active)`}
+                        disabled
+                        style={{ background: 'var(--parchment-dim)', color: 'var(--ink-soft)', cursor: 'not-allowed' }}
+                      />
+                      <small style={{ fontSize: '11px', color: 'var(--ink-soft)', marginTop: '4px', display: 'block' }}>
+                        Joined on {new Date(user.createdAt || Date.now()).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </small>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-gold"
+                    disabled={savingProfile}
+                    style={{ minWidth: '180px', padding: '12px 24px', fontSize: '13px' }}
+                  >
+                    <Save size={16} />
+                    <span>{savingProfile ? 'Saving Changes...' : 'Save Profile Changes'}</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Card 2: Security & Password Management */}
+              <div className="profile-card" style={{ padding: '28px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid var(--line)', paddingBottom: '16px', marginBottom: '22px' }}>
+                  <Key size={22} color="var(--pitch)" />
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--pitch)' }}>
+                      Security & Change Password
+                    </h3>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
+                      Apna account secure rakhne ke liye naya password set karein (Min 6 characters).
+                    </p>
+                  </div>
+                </div>
+
+                {passwordMsg && (
+                  <div
+                    style={{
+                      padding: '12px 16px',
+                      borderRadius: '8px',
+                      marginBottom: '20px',
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: passwordMsg.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                      color: passwordMsg.type === 'success' ? '#15803d' : '#b91c1c',
+                      border: `1px solid ${passwordMsg.type === 'success' ? '#86efac' : '#fca5a5'}`
+                    }}
+                  >
+                    {passwordMsg.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+                    <span>{passwordMsg.text}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleUpdatePassword}>
+                  <div style={{ maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {/* Current Password */}
+                    <div className="form-group">
+                      <label style={{ fontWeight: 700, color: 'var(--pitch)', fontSize: '0.88rem', marginBottom: '6px', display: 'block' }}>
+                        Current Password *
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type={showCurrentPass ? 'text' : 'password'}
+                          className="form-control"
+                          placeholder="Purana password daalein"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          required
+                          style={{ paddingRight: '40px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPass(!showCurrentPass)}
+                          style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--ink-soft)',
+                            cursor: 'pointer',
+                            padding: 0
+                          }}
+                        >
+                          {showCurrentPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* New Password */}
+                    <div className="form-group">
+                      <label style={{ fontWeight: 700, color: 'var(--pitch)', fontSize: '0.88rem', marginBottom: '6px', display: 'block' }}>
+                        New Password *
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type={showNewPass ? 'text' : 'password'}
+                          className="form-control"
+                          placeholder="Naya password (min 6 characters)"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          required
+                          style={{ paddingRight: '40px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPass(!showNewPass)}
+                          style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--ink-soft)',
+                            cursor: 'pointer',
+                            padding: 0
+                          }}
+                        >
+                          {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Confirm Password */}
+                    <div className="form-group">
+                      <label style={{ fontWeight: 700, color: 'var(--pitch)', fontSize: '0.88rem', marginBottom: '6px', display: 'block' }}>
+                        Confirm New Password *
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type={showConfirmPass ? 'text' : 'password'}
+                          className="form-control"
+                          placeholder="Naya password dobara daalein"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          style={{ paddingRight: '40px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPass(!showConfirmPass)}
+                          style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--ink-soft)',
+                            cursor: 'pointer',
+                            padding: 0
+                          }}
+                        >
+                          {showConfirmPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: '8px' }}>
+                      <button
+                        type="submit"
+                        className="btn btn-outline"
+                        disabled={savingPassword}
+                        style={{
+                          borderColor: 'var(--pitch)',
+                          color: 'var(--pitch)',
+                          padding: '12px 24px',
+                          fontSize: '13px',
+                          fontWeight: 700
+                        }}
+                      >
+                        <ShieldCheck size={16} />
+                        <span>{savingPassword ? 'Updating Password...' : 'Update Password'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {/* TAB 1: ORDERS HISTORY */}
           {activeTab === 'orders' && (
             <div>

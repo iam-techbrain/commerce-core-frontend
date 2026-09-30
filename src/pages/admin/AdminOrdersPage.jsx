@@ -1,34 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import API from '../../api/axios';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { ShoppingCart, Home, ChevronRight, Package, CheckCircle2 } from 'lucide-react';
 
 const AdminOrdersPage = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchOrders = async () => {
-    try {
+  // TanStack Query: Admin Orders
+  const { data: orders = [], isLoading: loading } = useQuery({
+    queryKey: ['admin-orders'],
+    queryFn: async () => {
       const res = await API.get('/orders/admin/all');
-      if (res.data.success) setOrders(res.data.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+      return res.data?.success ? res.data.data : [];
     }
-  };
-
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  });
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
       const res = await API.put(`/orders/${orderId}/status`, { orderStatus: newStatus });
       if (res.data.success) {
         alert(`Order status updated to "${newStatus}"!`);
-        fetchOrders();
+        queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-analytics'] });
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Status update error');

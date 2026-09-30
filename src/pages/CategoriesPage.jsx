@@ -1,24 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import API from '../api/axios';
 import { ChevronRight, Tag } from 'lucide-react';
 import { getImageUrl } from '../utils/image.util';
 
 const CategoriesPage = () => {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    API.get('/categories')
-      .then((res) => {
-        if (res.data.success) {
-          setCategories(res.data.data);
-        }
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: categories = [], isLoading: loading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await API.get('/categories');
+      return res.data?.success ? res.data.data : [];
+    },
+  });
 
   return (
     <div className="wrap" style={{ padding: '50px 32px' }}>

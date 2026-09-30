@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import API from '../../api/axios';
 import { CartContext } from '../../context/CartContext';
 import { WishlistContext } from '../../context/WishlistContext';
@@ -51,55 +52,41 @@ const HomePage = () => {
   const { isInWishlist, toggleWishlist } = useContext(WishlistContext);
   const navigate = useNavigate();
 
-  const [categories, setCategories] = useState(fallbackCategories);
-  const [products, setProducts] = useState([]);
-  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1 });
   const [page, setPage] = useState(1);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch Categories from Backend API
-  useEffect(() => {
-    API.get('/categories')
-      .then((res) => {
-        if (res.data.success && res.data.data?.length > 0) {
-          setCategories(res.data.data);
-        }
-      })
-      .catch((err) => console.log('Using fallback categories', err));
-  }, []);
+  // TanStack Query for Categories (Cached)
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const res = await API.get('/categories');
+      return res.data?.success && res.data.data?.length > 0 ? res.data.data : [];
+    },
+  });
 
-  // Fetch Products with Pagination from Backend API
-  useEffect(() => {
-    const fetchHomeProducts = async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams({
-          page,
-          limit: 8,
-          sortBy: 'createdAt',
-          sortOrder: 'desc'
-        });
-        if (selectedCategoryId) {
-          params.append('categoryId', selectedCategoryId);
-        }
+  const categories = (categoriesData && categoriesData.length > 0) ? categoriesData : fallbackCategories;
 
-        const res = await API.get(`/products?${params.toString()}`);
-        if (res.data.success) {
-          setProducts(res.data.data || []);
-          if (res.data.pagination) {
-            setPagination(res.data.pagination);
-          }
-        }
-      } catch (err) {
-        console.error('Home products fetch error:', err);
-      } finally {
-        setLoading(false);
+  // TanStack Query for Paginated Products with smooth page transitions
+  const { data: productsData, isLoading: loading } = useQuery({
+    queryKey: ['home-products', { page, categoryId: selectedCategoryId }],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page,
+        limit: 8,
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      });
+      if (selectedCategoryId) {
+        params.append('categoryId', selectedCategoryId);
       }
-    };
+      const res = await API.get(`/products?${params.toString()}`);
+      return res.data?.success ? res.data : { data: [], pagination: { currentPage: 1, totalPages: 1 } };
+    },
+    placeholderData: (previousData) => previousData,
+  });
 
-    fetchHomeProducts();
-  }, [page, selectedCategoryId]);
+  const products = productsData?.data || [];
+  const pagination = productsData?.pagination || { currentPage: 1, totalPages: 1 };
 
   const scrollToSection = (id) => {
     const el = document.getElementById(id);

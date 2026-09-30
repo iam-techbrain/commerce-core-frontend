@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import API from '../../api/axios';
 import AdminLayout from '../../components/admin/AdminLayout';
 import ProfileAvatar from '../../components/common/ProfileAvatar';
@@ -21,8 +22,7 @@ import {
 } from 'lucide-react';
 
 const AdminUsersPage = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [genderFilter, setGenderFilter] = useState('ALL');
   const [roleFilter, setRoleFilter] = useState('ALL');
@@ -51,24 +51,18 @@ const AdminUsersPage = () => {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
+  // TanStack Query: Users list
+  const { data: users = [], isLoading: loading } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: async () => {
       const res = await API.get('/users');
-      if (res.data.success) {
-        setUsers(res.data.data || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch users:', err);
-      showToast('Error fetching users from server');
-    } finally {
-      setLoading(false);
+      return res.data?.success ? res.data.data : [];
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const fetchUsers = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+  };
 
   // Quick Gender Update Handler
   const handleGenderChange = async (userId, newGender) => {

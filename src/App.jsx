@@ -24,6 +24,7 @@ import AdminBrandsPage from './pages/admin/AdminBrandsPage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import AdminLookupsPage from './pages/admin/AdminLookupsPage';
 
 import ProtectedRoute from './components/common/ProtectedRoute';
 import CartDrawer from './components/cart/CartDrawer';
@@ -60,6 +61,7 @@ function App() {
               <Route path="/admin/brands" element={<ProtectedRoute requiredRole="ADMIN"><AdminBrandsPage /></ProtectedRoute>} />
               <Route path="/admin/orders" element={<ProtectedRoute requiredRole="ADMIN"><AdminOrdersPage /></ProtectedRoute>} />
               <Route path="/admin/users" element={<ProtectedRoute requiredRole="ADMIN"><AdminUsersPage /></ProtectedRoute>} />
+              <Route path="/admin/lookups" element={<ProtectedRoute requiredRole="ADMIN"><AdminLookupsPage /></ProtectedRoute>} />
               <Route path="/admin/settings" element={<ProtectedRoute requiredRole="ADMIN"><AdminSettingsPage /></ProtectedRoute>} />
             </Routes>
 

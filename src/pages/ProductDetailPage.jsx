@@ -141,16 +141,23 @@ const ProductDetailPage = () => {
     addToCart(product.id, quantity, selectedVariant?.id, product);
   };
 
-  // Mock specs
+  // Parse dynamic JSON specifications from product
+  let parsedDynamicSpecs = {};
+  if (product.specifications) {
+    if (typeof product.specifications === 'string') {
+      try {
+        parsedDynamicSpecs = JSON.parse(product.specifications);
+      } catch (e) {}
+    } else if (typeof product.specifications === 'object') {
+      parsedDynamicSpecs = product.specifications;
+    }
+  }
+
+  // Dynamic specifications matrix
   const specifications = [
     { label: 'Brand', value: product.brand?.name || product.brandName || 'Chhabra Sports Original' },
-    { label: 'Category', value: product.category?.name || 'Racquet Sports' },
-    // { label: 'Frame Material', value: product.material || 'HM Graphite / Nanocell Neo' },
-    // { label: 'Weight / Option', value: selectedVariant?.title || selectedVariant?.name || 'Standard' },
-    // { label: 'Flexibility', value: 'Medium / Stiff Pro Flex' },
-    // { label: 'Recommended String Tension', value: '24 - 30 lbs (Gutting Available)' },
-    { label: 'Country of Origin', value: 'Japan / Taiwan' },
-    { label: 'Warranty', value: '1 Year Manufacturer Defect Warranty' }
+    { label: 'Category', value: product.category?.name || 'Sports Equipment' },
+    ...Object.entries(parsedDynamicSpecs).map(([label, value]) => ({ label, value }))
   ];
 
   return (
