@@ -20,7 +20,7 @@ const ProductGrid = ({ products, pagination, page, onPageChange }) => {
 
       {products.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px', background: 'var(--card-bg)', borderRadius: '16px' }}>
-          <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>Koi product nahi mila!</p>
+          <p style={{ fontSize: '1.2rem', color: 'var(--text-muted)' }}>No products found!</p>
         </div>
       ) : (
         <div className="product-grid">

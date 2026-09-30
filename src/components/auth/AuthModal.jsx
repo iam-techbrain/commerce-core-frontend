@@ -111,12 +111,12 @@ const AuthModal = ({ isOpen, onClose }) => {
         </form>
 
         <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-          {isLoginTab ? "Account nahi hai? " : "Pehle se account hai? "}
+          {isLoginTab ? "Don't have an account? " : "Already have an account? "}
           <button
             style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600, cursor: 'pointer' }}
             onClick={() => setIsLoginTab(!isLoginTab)}
           >
-            {isLoginTab ? 'Register Karein' : 'Login Karein'}
+            {isLoginTab ? 'Register' : 'Login'}
           </button>
         </div>
       </div>

@@ -223,7 +223,7 @@ const AdminCategoriesPage = () => {
       });
 
       if (res.data.success) {
-        alert('Main Category successfully add ho gayi! 📁');
+        alert('Main Category added successfully! 📁');
         setShowCategoryModal(false);
         setName('');
         setDescription('');
@@ -232,7 +232,7 @@ const AdminCategoriesPage = () => {
         fetchAllData();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Category add error!');
+      alert(err.response?.data?.message || 'Failed to add category!');
     }
   };
 
@@ -240,7 +240,7 @@ const AdminCategoriesPage = () => {
     e.preventDefault();
     try {
       if (!parentCatId) {
-        alert('Kripya Parent Category select karein!');
+        alert('Please select a Parent Category!');
         return;
       }
 
@@ -251,7 +251,7 @@ const AdminCategoriesPage = () => {
       });
 
       if (res.data.success) {
-        alert('Subcategory successfully add ho gayi! 🏷️');
+        alert('Subcategory added successfully! 🏷️');
         setShowSubModal(false);
         setSubName('');
         setSubDesc('');
@@ -259,33 +259,33 @@ const AdminCategoriesPage = () => {
         fetchAllData();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Subcategory add error!');
+      alert(err.response?.data?.message || 'Failed to add subcategory!');
     }
   };
 
   const handleDeleteCategory = async (id) => {
-    if (!window.confirm('Kya aap is main category ko delete karna chahte hain?')) return;
+    if (!window.confirm('Are you sure you want to delete this main category?')) return;
     try {
       const res = await API.delete(`/categories/${id}`);
       if (res.data.success) {
-        alert('Category delete ho gayi!');
+        alert('Category deleted successfully!');
         fetchAllData();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Category delete nahi ho sakti!');
+      alert(err.response?.data?.message || 'Could not delete category!');
     }
   };
 
   const handleDeleteSubCategory = async (id) => {
-    if (!window.confirm('Kya aap is subcategory ko delete karna chahte hain?')) return;
+    if (!window.confirm('Are you sure you want to delete this subcategory?')) return;
     try {
       const res = await API.delete(`/subcategories/${id}`);
       if (res.data.success) {
-        alert('Subcategory delete ho gayi!');
+        alert('Subcategory deleted successfully!');
         fetchAllData();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Subcategory delete nahi ho sakti!');
+      alert(err.response?.data?.message || 'Could not delete subcategory!');
     }
   };
 

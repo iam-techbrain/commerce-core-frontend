@@ -19,7 +19,7 @@ const CartDrawer = () => {
 
   const handleCheckoutClick = () => {
     if (!user) {
-      alert('Kripya Order karne ke liye pehle Login karein! 🔑');
+      alert('Please log in first to place your order! 🔑');
       setIsDrawerOpen(false);
       navigate('/login');
       return;

@@ -181,7 +181,7 @@ const AdminProductsPage = () => {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert('Template download failed. Kripya dobara try karein.');
+      alert('Template download failed. Please try again.');
     }
   };
 
@@ -264,7 +264,7 @@ const AdminProductsPage = () => {
         });
 
         if (res.data.success) {
-          alert('🎉 Product successfully create ho gaya!');
+          alert('🎉 Product created successfully!');
           resetForm();
           fetchProducts();
         }
@@ -288,13 +288,13 @@ const AdminProductsPage = () => {
 
         const res = await API.post('/products', payload);
         if (res.data.success) {
-          alert('🎉 Product successfully create ho gaya!');
+          alert('🎉 Product created successfully!');
           resetForm();
           fetchProducts();
         }
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Product save karne me error aaya!');
+      alert(err.response?.data?.message || 'Error occurred while saving product!');
     }
   };
 
@@ -323,7 +323,7 @@ const AdminProductsPage = () => {
   const handleBulkUpload = async (e) => {
     e.preventDefault();
     if (!bulkFile) {
-      alert('Kripya ek Excel (.xlsx / .csv) file select karein!');
+      alert('Please select an Excel (.xlsx / .csv) file!');
       return;
     }
 
@@ -351,7 +351,7 @@ const AdminProductsPage = () => {
     } catch (err) {
       setBulkMessage({
         type: 'error',
-        text: err.response?.data?.message || 'Bulk upload error. Kripya check karein file me max 50 rows hon.'
+        text: err.response?.data?.message || 'Bulk upload error. Please ensure the file has a maximum of 50 rows.'
       });
     } finally {
       setBulkUploading(false);
@@ -359,7 +359,7 @@ const AdminProductsPage = () => {
   };
 
   const handleDeleteProduct = async (id) => {
-    if (!window.confirm('Kya aap sach me is product ko delete karna chahte hain?')) return;
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
     try {
       const res = await API.delete(`/products/${id}`);
       if (res.data.success) {
@@ -395,7 +395,7 @@ const AdminProductsPage = () => {
     e.preventDefault();
     if (!selectedProductForVariants) return;
     if (!newVarPrice) {
-      alert('Variant Price zaroori hai!');
+      alert('Variant Price is required!');
       return;
     }
 
@@ -439,7 +439,7 @@ const AdminProductsPage = () => {
     } catch (err) {
       setVariantActionMsg({
         type: 'error',
-        text: err.response?.data?.message || 'Variant add karne me error aaya!'
+        text: err.response?.data?.message || 'Failed to add variant!'
       });
     } finally {
       setAddingVariant(false);
@@ -447,11 +447,11 @@ const AdminProductsPage = () => {
   };
 
   const handleDeleteVariant = async (variantId) => {
-    if (!window.confirm('Kya aap sach me is variant ko delete karna chahte hain?')) return;
+    if (!window.confirm('Are you sure you want to delete this variant?')) return;
     try {
       const res = await API.delete(`/products/variants/${variantId}`);
       if (res.data.success) {
-        setVariantActionMsg({ type: 'success', text: 'Variant successfully delete ho gaya!' });
+        setVariantActionMsg({ type: 'success', text: 'Variant deleted successfully!' });
 
         const updatedProdRes = await API.get('/products?limit=100');
         if (updatedProdRes.data.success) {
@@ -486,7 +486,7 @@ const AdminProductsPage = () => {
       });
 
       if (res.data.success) {
-        setVariantActionMsg({ type: 'success', text: 'Variant successfully update ho gaya!' });
+        setVariantActionMsg({ type: 'success', text: 'Variant updated successfully!' });
         setEditingVariantId(null);
 
         const updatedProdRes = await API.get('/products?limit=100');
@@ -522,7 +522,7 @@ const AdminProductsPage = () => {
   const handleAddAttributeValue = async (attributeId) => {
     const input = newValInputs[attributeId];
     if (!input || !input.value || !input.value.trim()) {
-      alert('Kripya value enter karein!');
+      alert('Please enter a value!');
       return;
     }
     try {
@@ -580,7 +580,7 @@ const AdminProductsPage = () => {
 
   const handleSaveEditRow = async (productId) => {
     if (!editingRowData.name.trim()) {
-      alert('Product name khali nahi ho sakta!');
+      alert('Product name cannot be empty!');
       return;
     }
     setSavingRowId(productId);
@@ -1583,7 +1583,7 @@ const AdminProductsPage = () => {
                       fontSize: '0.85rem'
                     }}
                   >
-                    Is product ke liye abhi koi variant nahi hai. Neeche diye gaye form se naya variant add karein! 👇
+                    No variants exist for this product yet. Add a new variant using the form below! 👇
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -2539,7 +2539,7 @@ const AdminProductsPage = () => {
 
                 {Object.keys(specsModalData).length === 0 ? (
                   <div style={{ padding: '20px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>Koi bhi specification nahi hai. Neeche se add karein!</p>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '0.85rem' }}>No specifications available. Add one below!</p>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -2753,7 +2753,7 @@ const AdminProductsPage = () => {
                   {products.length === 0 ? (
                     <tr>
                       <td colSpan={7} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                        Koi Product nahi mila. Naya product add karein ya Excel bulk upload karein!
+                        No products found. Add a new product or upload via Excel bulk upload!
                       </td>
                     </tr>
                   ) : (

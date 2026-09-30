@@ -172,11 +172,11 @@ const AdminUsersPage = () => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!formData.phone || !formData.phone.trim()) {
-      showToast('Mobile Number is mandatory (zaroori)!');
+      showToast('Mobile Number is required!');
       return;
     }
     if (!formData.gender) {
-      showToast('Gender is mandatory (zaroori)!');
+      showToast('Gender is required!');
       return;
     }
 

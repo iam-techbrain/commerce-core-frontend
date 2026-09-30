@@ -48,7 +48,7 @@ const LoginPage = () => {
       } else {
         // Registration Mandatory Validations
         if (!phone.trim()) {
-          setError('Mobile Number is mandatory (zaroori) for registration!');
+          setError('Mobile Number is required for registration!');
           setLoading(false);
           return;
         }

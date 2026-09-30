@@ -140,7 +140,7 @@ const AdminBrandsPage = () => {
       });
 
       if (res.data.success) {
-        alert('Brand successfully add ho gaya! 🏷️');
+        alert('Brand added successfully! 🏷️');
         setShowModal(false);
         setName('');
         setDescription('');
@@ -149,20 +149,20 @@ const AdminBrandsPage = () => {
         fetchBrands();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Brand add error!');
+      alert(err.response?.data?.message || 'Failed to add brand!');
     }
   };
 
   const handleDeleteBrand = async (id) => {
-    if (!window.confirm('Kya aap is brand ko delete karna chahte hain?')) return;
+    if (!window.confirm('Are you sure you want to delete this brand?')) return;
     try {
       const res = await API.delete(`/brands/${id}`);
       if (res.data.success) {
-        alert('Brand delete ho gaya!');
+        alert('Brand deleted successfully!');
         fetchBrands();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Brand delete nahi ho sakta!');
+      alert(err.response?.data?.message || 'Could not delete brand!');
     }
   };
 

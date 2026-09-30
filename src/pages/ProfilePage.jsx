@@ -118,7 +118,7 @@ const ProfilePage = () => {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (!profileName.trim()) {
-      setProfileMsg({ type: 'error', text: 'Name khali nahi ho sakta!' });
+      setProfileMsg({ type: 'error', text: 'Name cannot be empty!' });
       return;
     }
     setSavingProfile(true);
@@ -148,7 +148,7 @@ const ProfilePage = () => {
         if (updated.gender) localStorage.setItem(`user_gender_${user.id}`, updated.gender);
         if (updated.avatar) localStorage.setItem(`user_avatar_${user.id}`, updated.avatar);
         setUser((prev) => ({ ...prev, ...updated }));
-        setProfileMsg({ type: 'success', text: 'Profile details successfully update ho gayi! 🎉' });
+        setProfileMsg({ type: 'success', text: 'Profile details updated successfully! 🎉' });
         setTimeout(() => setProfileMsg(null), 4000);
       }
     } catch (err) {
@@ -161,15 +161,15 @@ const ProfilePage = () => {
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
     if (!currentPassword) {
-      setPasswordMsg({ type: 'error', text: 'Current password enter karein!' });
+      setPasswordMsg({ type: 'error', text: 'Please enter your current password!' });
       return;
     }
     if (!newPassword || newPassword.length < 6) {
-      setPasswordMsg({ type: 'error', text: 'New password kam se kam 6 characters ka hona chahiye!' });
+      setPasswordMsg({ type: 'error', text: 'New password must be at least 6 characters long!' });
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordMsg({ type: 'error', text: 'New password aur Confirm password match nahi ho rahe!' });
+      setPasswordMsg({ type: 'error', text: 'New password and confirm password do not match!' });
       return;
     }
 
@@ -181,7 +181,7 @@ const ProfilePage = () => {
         password: newPassword
       });
       if (res.data.success) {
-        setPasswordMsg({ type: 'success', text: 'Password successfully change ho gaya! 🔒' });
+        setPasswordMsg({ type: 'success', text: 'Password changed successfully! 🔒' });
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -571,7 +571,7 @@ const ProfilePage = () => {
                         className="form-control"
                         value={profileName}
                         onChange={(e) => setProfileName(e.target.value)}
-                        placeholder="Aapka Naam"
+                        placeholder="Your Full Name"
                         required
                       />
                     </div>
@@ -603,7 +603,7 @@ const ProfilePage = () => {
                         style={{ background: 'var(--parchment-dim)', color: 'var(--ink-soft)', cursor: 'not-allowed' }}
                       />
                       <small style={{ fontSize: '11px', color: 'var(--ink-soft)', marginTop: '4px', display: 'block' }}>
-                        Security reason se email change nahi kiya ja sakta.
+                        Email address cannot be changed for security reasons.
                       </small>
                     </div>
 
@@ -645,7 +645,7 @@ const ProfilePage = () => {
                       Security & Change Password
                     </h3>
                     <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
-                      Apna account secure rakhne ke liye naya password set karein (Min 6 characters).
+                      Set a new password to keep your account secure (Min 6 characters).
                     </p>
                   </div>
                 </div>
@@ -682,7 +682,7 @@ const ProfilePage = () => {
                         <input
                           type={showCurrentPass ? 'text' : 'password'}
                           className="form-control"
-                          placeholder="Purana password daalein"
+                          placeholder="Enter current password"
                           value={currentPassword}
                           onChange={(e) => setCurrentPassword(e.target.value)}
                           required
@@ -717,7 +717,7 @@ const ProfilePage = () => {
                         <input
                           type={showNewPass ? 'text' : 'password'}
                           className="form-control"
-                          placeholder="Naya password (min 6 characters)"
+                          placeholder="Enter new password (min 6 characters)"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           required
@@ -752,7 +752,7 @@ const ProfilePage = () => {
                         <input
                           type={showConfirmPass ? 'text' : 'password'}
                           className="form-control"
-                          placeholder="Naya password dobara daalein"
+                          placeholder="Confirm new password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           required
@@ -814,7 +814,7 @@ const ProfilePage = () => {
               ) : orders.length === 0 ? (
                 <div className="profile-card" style={{ textAlign: 'center', padding: '48px' }}>
                   <Package size={48} color="var(--ink-soft)" style={{ margin: '0 auto 12px' }} />
-                  <p style={{ color: 'var(--ink-soft)', fontSize: '1rem' }}>Aapne abhi tak koi order place nahi kiya.</p>
+                  <p style={{ color: 'var(--ink-soft)', fontSize: '1rem' }}>You have not placed any orders yet.</p>
                   <button className="btn btn-gold" style={{ marginTop: '16px' }} onClick={() => navigate('/products')}>
                     Browse Catalog
                   </button>
@@ -993,7 +993,7 @@ const ProfilePage = () => {
               {addresses.length === 0 ? (
                 <div className="profile-card" style={{ textAlign: 'center', padding: '48px' }}>
                   <MapPin size={48} color="var(--ink-soft)" style={{ margin: '0 auto 12px' }} />
-                  <p style={{ color: 'var(--ink-soft)' }}>Koi saved address nahi hai.</p>
+                  <p style={{ color: 'var(--ink-soft)' }}>No saved addresses found.</p>
                 </div>
               ) : (
                 addresses.map((addr) => (
@@ -1041,7 +1041,7 @@ const ProfilePage = () => {
               {wishlistItems.length === 0 ? (
                 <div className="profile-card" style={{ textAlign: 'center', padding: '48px' }}>
                   <Heart size={48} color="var(--ink-soft)" style={{ margin: '0 auto 12px' }} />
-                  <p style={{ color: 'var(--ink-soft)', fontSize: '1rem' }}>Aapki wishlist abhi khali hai.</p>
+                  <p style={{ color: 'var(--ink-soft)', fontSize: '1rem' }}>Your wishlist is currently empty.</p>
                   <button className="btn btn-gold" style={{ marginTop: '16px' }} onClick={() => navigate('/products')}>
                     Explore Products
                   </button>

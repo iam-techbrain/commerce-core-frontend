@@ -146,7 +146,7 @@ const AdminSettingsPage = () => {
         setPasswordMsg({ type: 'error', text: res.data.message || 'Password update failed.' });
       }
     } catch (err) {
-      setPasswordMsg({ type: 'error', text: err.response?.data?.message || 'Current password galat hai ya server error.' });
+      setPasswordMsg({ type: 'error', text: err.response?.data?.message || 'Incorrect current password or server error.' });
     } finally {
       setPasswordLoading(false);
       setTimeout(() => setPasswordMsg(null), 5000);
@@ -328,7 +328,7 @@ const AdminSettingsPage = () => {
                 <div>
                   <h3 className="admin-card-title">Console Theme & Color Customizer</h3>
                   <div style={{ fontSize: '0.78rem', color: 'var(--admin-text-muted)' }}>
-                    Sidebar, Header, Body, aur Footer ka color customize karein. Ye colors browser ke LocalStorage me save hote hain.
+                    Customize colors for Sidebar, Header, Body, and Footer. These colors are saved in browser LocalStorage.
                   </div>
                 </div>
               </div>

@@ -69,13 +69,13 @@ const CheckoutModal = ({ isOpen, onClose }) => {
         setShowAddAddressForm(false);
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Address save karne me dikkat aayi!');
+      alert(err.response?.data?.message || 'Failed to save address!');
     }
   };
 
   const handlePayNow = async (isInstantSimulate = false) => {
     if (!selectedAddressId) {
-      alert('Kripya delivery address select karein ya naya address add karein!');
+      alert('Please select a delivery address or add a new address!');
       return;
     }
 
@@ -110,7 +110,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
       if (!isLoaded) {
         // Fallback for offline/test mode if script load fails
-        if (window.confirm('Razorpay Script Load nahi ho saka. Dynamic Test Mode Payment simulate karein?')) {
+        if (window.confirm('Could not load Razorpay script. Would you like to simulate a dynamic test payment?')) {
           await completePaymentVerification(razorpay.orderId, `pay_test_dummy_${Date.now()}`, 'TEST_SIMULATED_SIGNATURE');
         }
         setProcessingPayment(false);
@@ -150,7 +150,7 @@ const CheckoutModal = ({ isOpen, onClose }) => {
       const paymentWindow = new window.Razorpay(options);
 
       paymentWindow.on('payment.failed', function (response) {
-        if (window.confirm(`Payment Gateway Notice: ${response.error.description || 'Test Mode'}. Test simulated payment proceed karein?`)) {
+        if (window.confirm(`Payment Gateway Notice: ${response.error.description || 'Test Mode'}. Would you like to proceed with simulated test payment?`)) {
           completePaymentVerification(razorpay.orderId, `pay_test_dummy_${Date.now()}`, 'TEST_SIMULATED_SIGNATURE');
         } else {
           setProcessingPayment(false);
@@ -176,11 +176,11 @@ const CheckoutModal = ({ isOpen, onClose }) => {
 
       if (verifyRes.data.success) {
         clearCart();
-        alert('🎉 Payment Successful! Aapka order successfully place ho gaya hai.');
+        alert('🎉 Payment Successful! Your order has been placed successfully.');
         onClose();
         navigate('/profile?tab=orders');
       } else {
-        alert('Payment verification fail ho gaya.');
+        alert('Payment verification failed.');
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Payment Verification Server Error!');

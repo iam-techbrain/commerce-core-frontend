@@ -18,7 +18,7 @@ const AdminLoginPage = () => {
       if (user.role === 'ADMIN') {
         navigate('/admin/dashboard', { replace: true });
       } else {
-        setError('Aapka current account Customer role ka hai. Admin account se login karein.');
+        setError('Your current account has a Customer role. Please log in with an Admin account.');
       }
     }
   }, [user, navigate]);
@@ -35,7 +35,7 @@ const AdminLoginPage = () => {
         if (loggedInUser?.role === 'ADMIN') {
           navigate('/admin/dashboard', { replace: true });
         } else {
-          setError('Aapka account Admin role ka nahi hai. Authorized Admin account se login karein.');
+          setError('Your account does not have Admin privileges. Please log in with an authorized Admin account.');
         }
       } else {
         setError(res.message || 'Invalid admin credentials');
